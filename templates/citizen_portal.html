@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if is_te %}స్లాట్ వివరాలు - ఆహార సేతు{% else %}Assigned Slot Details - Aahara Setu{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="portal-minimal-wrapper">
+  {% set b = data.beneficiary %}
+  {% set fps = data.fps %}
+
+  <!-- Assigned Slot Details Card Section -->
+  <section class="slot-details-card" id="assigned-slot-details-section">
+    
+    <!-- Top Display: Display ONLY 'Government of Telangana' -->
+    <div class="gov-only-header">
+      <h2 class="gov-header-title">
+        {% if is_te %}తెలంగాణ ప్రభుత్వం{% else %}Government of Telangana{% endif %}
+      </h2>
+    </div>
+
+    <!-- Assigned Slot Key Information Grid -->
+    <div class="slot-details-content">
+      
+      <!-- Key Status Banner -->
+      <div class="status-indicator-bar {% if b.distribution_status == 'COMPLETED' %}status-collected{% else %}status-pending{% endif %}">
+        <span class="status-dot"></span>
+        <span class="status-text">
+          {% if b.distribution_status == 'COMPLETED' %}
+            {% if is_te %}సేకరణ స్థితి: సేకరించబడింది (Collected){% else %}Collection Status: Collected{% endif %}
+          {% else %}
+            {% if is_te %}సేకరణ స్థితి: సేకరించలేదు (Not Collected){% else %}Collection Status: Not Collected{% endif %}
+          {% endif %}
+        </span>
+      </div>
+
+      <!-- Beneficiary & Slot Information Grid -->
+      <div class="info-grid-2col">
+        
+        <div class="info-item">
+          <span class="info-label">
+            {% if is_te %}లబ్ధిదారుని పేరు{% else %}Beneficiary Name{% endif %}
+          </span>
+          <span class="info-val font-semibold">{{ b.name }}</span>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">
+            {% if is_te %}రేషన్ కార్డు సంఖ్య{% else %}Ration Card Number{% endif %}
+          </span>
+          <span class="info-val font-mono">{{ b.ration_card_number }}</span>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">
+            {% if is_te %}నమోదిత మొబైల్ సంఖ్య{% else %}Registered Mobile Number{% endif %}
+          </span>
+          <span class="info-val">{{ b.registered_mobile if b.registered_mobile else ('నమోదు కాలేదు' if is_te else 'Not Registered') }}</span>
+        </div>
+
+        <div class="info-item highlight-item">
+          <span class="info-label">
+            {% if is_te %}కేటాయించిన తేదీ{% else %}Allocated Slot Date{% endif %}
+          </span>
+          <span class="info-val text-primary font-bold">
+            📅 {{ b.slot_date or '2026-10-08' }}
+          </span>
+        </div>
+
+        <div class="info-item highlight-item">
+          <span class="info-label">
+            {% if is_te %}కేటాయించిన సమయం{% else %}Allocated Slot Time{% endif %}
+          </span>
+          <span class="info-val text-emerald font-bold">
+            ⏰ {{ b.start_time or '08:00 AM' }} - {{ b.end_time or '10:30 AM' }}
+          </span>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">
+            {% if is_te %}రేషన్ దుకాణం (FPS){% else %}Fair Price Shop (FPS){% endif %}
+          </span>
+          <span class="info-val font-semibold">🏪 {{ b.fps_shop_number }}</span>
+          <small class="info-sub">{{ fps.dealer_name }} &bull; {{ fps.location }}</small>
+        </div>
+
+      </div>
+
+      <!-- KEYPAD PHONE MULTIMODAL COMMUNICATION SERVICE CARD -->
+      {% if b.has_mobile %}
+        <div class="keypad-portal-alert-card">
+          <div class="keypad-portal-header">
+            <div class="keypad-portal-icon">📱</div>
+            <div>
+              <h4 class="keypad-portal-title">
+                {% if is_te %}సాధారణ కీప్యాడ్ ఫోన్ సేవ (SMS &amp; వాయిస్ కాల్ పంపబడింది){% else %}Keypad Phone Alert Service (SMS &amp; Voice Call Dispatched){% endif %}
+              </h4>
+              <p class="keypad-portal-desc">
+                {% if is_te %}
+                  స్మార్ట్‌ఫోన్లు లేదా ఇంటర్నెట్ లేని వినియోగదారుల కోసం: మీ నమోదిత మొబైల్ సంఖ్య (<strong>{{ b.registered_mobile }}</strong>) కు స్లాట్ కేటాయింపు వివరాలతో ద్విభాషా SMS మరియు స్వయంచాలక వాయిస్ కాల్ విజయవంతంగా పంపబడ్డాయి. సాధారణ కీప్యాడ్ ఫోన్ ద్వారానే సమాచారం అందుబాటులో ఉంది.
+                {% else %}
+                  For citizens using basic keypad phones without smartphones: Automated bilingual SMS and voice IVR calls have been successfully dispatched to your registered phone (<strong>{{ b.registered_mobile }}</strong>).
+                {% endif %}
+              </p>
+            </div>
+          </div>
+
+          <div class="keypad-portal-box">
+            <div class="keypad-portal-sms">
+              <span class="sms-title-badge">💬 {% if is_te %}ద్విభాషా SMS సందేశం{% else %}Dispatched SMS Message{% endif %}</span>
+              <div class="sms-quote">"{{ b.sms_te if is_te else b.sms_en }}"</div>
+            </div>
+            <div class="keypad-portal-voice">
+              <span class="voice-title-badge">📞 {% if is_te %}స్వయంచాలక వాయిస్ కాల్ (IVR స్క్రిప్ట్){% else %}Automated Voice Call (IVR Script){% endif %}</span>
+              <div class="voice-quote">"{{ b.voice_te if is_te else b.voice_en }}"</div>
+              <div style="margin-top: 0.65rem;">
+                <button type="button" class="btn-listen-voice-small" onclick="playCitizenVoice()">
+                  <span id="cit-voice-icon">🔊</span> <span id="cit-voice-label">{% if is_te %}వాయిస్ కాల్ వినండి (Play Voice Call){% else %}Listen to Voice Call Audio{% endif %}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <div class="keypad-portal-alert-card announcement-style">
+          <div class="keypad-portal-header">
+            <div class="keypad-portal-icon">📢</div>
+            <div>
+              <h4 class="keypad-portal-title">
+                {% if is_te %}గ్రామ పంచాయతీ చాటింపు సేవ (ఫోన్ లేని వారికి){% else %}Gram Panchayat Village Broadcast Service{% endif %}
+              </h4>
+              <p class="keypad-portal-desc">
+                {% if is_te %}
+                  మీ రేషన్ కార్డుకు మొబైల్ ఫోన్ నమోదు కానందున, మీ స్లాట్ వివరాలు గ్రామ పంచాయతీ లావుడ్‌స్పీకర్ చాటింపు మరియు నోటీస్ బోర్డు జాబితాలో చేర్చబడ్డాయి.
+                {% else %}
+                  Since no mobile phone is registered for this ration card, your slot details are published in the village loudspeaker announcement roster and Gram Panchayat notice board.
+                {% endif %}
+              </p>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Goods Details Table (Rice price is zero) -->
+      <div class="goods-details-section">
+        <h3 class="goods-heading">
+          {% if is_te %}కేటాయించిన సరుకుల వివరాలు &amp; పరిమాణం{% else %}Allocated Goods Details &amp; Quantity{% endif %}
+        </h3>
+        
+        <div class="table-container-minimal">
+          <table class="minimal-table">
+            <thead>
+              <tr>
+                <th>{% if is_te %}సరుకు పేరు{% else %}Commodity Name{% endif %}</th>
+                <th>{% if is_te %}పరిమాణం{% else %}Quantity{% endif %}</th>
+                <th>{% if is_te %}ధర{% else %}Price / Rate{% endif %}</th>
+                <th>{% if is_te %}మొత్తం{% else %}Cost{% endif %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in data.commodities %}
+              <tr>
+                <td>
+                  <strong>{% if is_te %}{{ item.name_te }}{% else %}{{ item.name }}{% endif %}</strong>
+                </td>
+                <td>{{ item.qty }}</td>
+                <td>
+                  {% if 'Rice' in item.name %}
+                    <span class="price-free">₹0.00 / kg ({% if is_te %}ఉచితం{% else %}Free{% endif %})</span>
+                  {% else %}
+                    {{ item.rate }}
+                  {% endif %}
+                </td>
+                <td>
+                  {% if 'Rice' in item.name %}
+                    <strong class="price-free">₹0.00</strong>
+                  {% else %}
+                    <strong>{{ item.cost }}</strong>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+              <tr class="table-total-row">
+                <td colspan="3" class="text-right">
+                  <strong>{% if is_te %}మొత్తం చెల్లించవలసినది:{% else %}Total Payable:{% endif %}</strong>
+                </td>
+                <td class="total-val">
+                  <strong>{{ data.total_payable }}</strong>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Sign Out button at the bottom of the Check Assigned Slot Details section -->
+    <div class="slot-details-signout-row">
+      <a href="{{ url_for('logout') }}" class="btn-signout" id="btn-citizen-signout" title="Sign Out">
+        <span>🚪</span> {% if is_te %}నిష్క్రమించండి (Sign Out){% else %}Sign Out{% endif %}
+      </a>
+    </div>
+
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let isCitizenPlaying = false;
+  function playCitizenVoice() {
+    if (!('speechSynthesis' in window)) {
+      alert("Speech synthesis is not supported on this device.");
+      return;
+    }
+
+    if (isCitizenPlaying) {
+      window.speechSynthesis.cancel();
+      isCitizenPlaying = false;
+      document.getElementById('cit-voice-icon').textContent = '🔊';
+      document.getElementById('cit-voice-label').textContent = {% if is_te %}'వాయిస్ కాల్ వినండి (Play Voice Call)'{% else %}'Listen to Voice Call Audio'{% endif %};
+      return;
+    }
+
+    const scriptText = {% if is_te %}{{ (data.beneficiary.voice_te if data.beneficiary else '')|tojson }}{% else %}{{ (data.beneficiary.voice_en if data.beneficiary else '')|tojson }}{% endif %};
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(scriptText);
+    utt.lang = {% if is_te %}'te-IN'{% else %}'en-IN'{% endif %};
+    utt.rate = 0.95;
+
+    utt.onstart = () => {
+      isCitizenPlaying = true;
+      document.getElementById('cit-voice-icon').textContent = '⏹️';
+      document.getElementById('cit-voice-label').textContent = {% if is_te %}'ఆపండి (Stop Voice Call)'{% else %}'Stop Voice Call'{% endif %};
+    };
+
+    utt.onend = () => {
+      isCitizenPlaying = false;
+      document.getElementById('cit-voice-icon').textContent = '🔊';
+      document.getElementById('cit-voice-label').textContent = {% if is_te %}'వాయిస్ కాల్ వినండి (Play Voice Call)'{% else %}'Listen to Voice Call Audio'{% endif %};
+    };
+
+    utt.onerror = () => {
+      isCitizenPlaying = false;
+      document.getElementById('cit-voice-icon').textContent = '🔊';
+      document.getElementById('cit-voice-label').textContent = {% if is_te %}'వాయిస్ కాల్ వినండి (Play Voice Call)'{% else %}'Listen to Voice Call Audio'{% endif %};
+    };
+
+    window.speechSynthesis.speak(utt);
+  }
+</script>
+{% endblock %}

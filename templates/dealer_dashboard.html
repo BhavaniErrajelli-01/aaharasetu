@@ -1,0 +1,644 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if is_te %}డీలర్ డాష్‌బోర్డ్ - ఆహార సేతు{% else %}Dealer Dashboard - Aahara Setu{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="dealer-container">
+
+  <!-- Dealer Navigation & Header Info -->
+  <div class="dealer-top-bar">
+    <div>
+      <h2 class="dealer-title">
+        {% if is_te %}డీలర్ డాష్‌బోర్డ్{% else %}Dealer Dashboard{% endif %}
+      </h2>
+      <p class="dealer-sub">
+        {% if is_te %}ప్రాంతం, సరుకుల నిల్వ మరియు లబ్ధిదారుల సేకరణ స్థితి నిర్వహణ{% else %}Regional Distribution, Stock Inventory &amp; Beneficiary Collection Tracking{% endif %}
+      </p>
+    </div>
+    <div class="dealer-badge-profile">
+      <span>🏢 <strong>{{ shop_data.fps_info.dealer_name }}</strong> ({{ session.username }})</span>
+      <span class="badge-fps-pill">{{ current_fps }}</span>
+    </div>
+  </div>
+
+  <!-- 4 DROPDOWNS: District, Mandal, Village/Region, Fair Price Shop Name -->
+  <section class="dealer-card selection-card">
+    <div class="card-header-clean">
+      <h3>{% if is_te %}ప్రాంతం &amp; రేషన్ దుకాణ ఎంపిక{% else %}Select Region &amp; Fair Price Shop{% endif %}</h3>
+    </div>
+    
+    <div class="dropdowns-grid-4">
+      <!-- 1. District -->
+      <div class="form-group-clean">
+        <label for="select-district">{% if is_te %}జిల్లా{% else %}District{% endif %}</label>
+        <select id="select-district" class="select-clean" onchange="onDistrictChange()">
+          {% for d in jurisdiction %}
+            <option value="{{ d.district_id }}">{{ d.district }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- 2. Mandal -->
+      <div class="form-group-clean">
+        <label for="select-mandal">{% if is_te %}మండలం{% else %}Mandal{% endif %}</label>
+        <select id="select-mandal" class="select-clean" onchange="onMandalChange()">
+          <!-- Populated by JS -->
+        </select>
+      </div>
+
+      <!-- 3. Village / Region -->
+      <div class="form-group-clean">
+        <label for="select-village">{% if is_te %}గ్రామం / ప్రాంతం{% else %}Village / Region{% endif %}</label>
+        <select id="select-village" class="select-clean" onchange="onVillageChange()">
+          <!-- Populated by JS -->
+        </select>
+      </div>
+
+      <!-- 4. Fair Price Shop -->
+      <div class="form-group-clean">
+        <label for="select-fps">{% if is_te %}రేషన్ దుకాణం (FPS){% else %}Fair Price Shop (FPS){% endif %}</label>
+        <select id="select-fps" class="select-clean" onchange="onFpsChange()">
+          {% for d in all_dealers %}
+            <option value="{{ d.fair_shop_id }}" {% if current_fps == d.fair_shop_id %}selected{% endif %}>
+              {{ d.fair_shop_id }} &bull; {{ d.dealer_name }} ({{ d.mandal }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <!-- GOODS DETAILS WITH QUANTITY -->
+  <section class="dealer-card goods-card">
+    <div class="card-header-flex">
+      <div>
+        <h3>{% if is_te %}సరుకుల వివరాలు &amp; లభ్యత పరిమాణం{% else %}Goods Details &amp; Available Stock Quantity{% endif %}</h3>
+        <small class="text-muted">{{ shop_data.fps_shop_number }} &bull; {{ shop_data.fps_info.dealer_name }} &bull; {{ shop_data.fps_info.location }}</small>
+      </div>
+      <span class="badge-fps">{{ current_fps }}</span>
+    </div>
+
+    <div class="goods-chips-grid">
+      {% for item in shop_data.inventory %}
+        <div class="goods-chip-card">
+          <div class="goods-chip-top">
+            <span class="goods-chip-name">{% if is_te %}{{ item.name_te }}{% else %}{{ item.name }}{% endif %}</span>
+            <span class="goods-chip-badge">{{ item.status }}</span>
+          </div>
+          <div class="goods-chip-qty">{{ item.stock_qty }}</div>
+          <div class="goods-chip-meta">
+            <span>{% if is_te %}కోటా: {% else %}Quota: {% endif %}{{ item.allotted_quota }}</span>
+            <span class="{% if '0.00' in item.rate %}price-free-text{% endif %}">{{ item.rate }}</span>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- KEYPAD PHONE MULTIMODAL COMMUNICATION METRICS -->
+  <section class="dealer-card comm-metrics-card">
+    <div class="card-header-clean" style="margin-bottom: 0.75rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--navy-900);">
+            📱 {% if is_te %}కీప్యాడ్ ఫోన్ కమ్యూనికేషన్ పర్యవేక్షణ (SMS &amp; వాయిస్ కాల్స్){% else %}Keypad Phone Multimodal Alerts (SMS &amp; Voice Calls){% endif %}
+          </h3>
+          <p style="font-size: 0.82rem; color: var(--navy-600); margin-top: 0.15rem;">
+            {% if is_te %}స్మార్ట్‌ఫోన్లు లేని సాధారణ కీప్యాడ్ ఫోన్ వినియోగదారులకు పంపిన ఆటోమేటెడ్ అలర్ట్‌ల వివరాలు{% else %}Automated slot booking alerts delivered to offline / feature keypad phone users without smartphones{% endif %}
+          </p>
+        </div>
+        <span class="badge-comm-active">
+          ⚡ {% if is_te %}సేవ యాక్టివ్‌గా ఉంది{% else %}Service Active{% endif %}
+        </span>
+      </div>
+    </div>
+
+    <div class="comm-kpi-grid">
+      <!-- 1. Keypad Phone Users -->
+      <div class="comm-kpi-box box-blue">
+        <div class="comm-kpi-icon">📟</div>
+        <div class="comm-kpi-data">
+          <div class="comm-kpi-val">{{ shop_data.counts.keypad_users }}</div>
+          <div class="comm-kpi-label">{% if is_te %}కీప్యాడ్ ఫోన్ వినియోగదారులు{% else %}Keypad Phone Users{% endif %}</div>
+          <small class="comm-kpi-sub">{% if is_te %}స్మార్ట్‌ఫోన్ లేని సాధారణ ఫోన్లు{% else %}Basic phones without smartphone{% endif %}</small>
+        </div>
+      </div>
+
+      <!-- 2. Bilingual SMS Dispatched -->
+      <div class="comm-kpi-box box-emerald">
+        <div class="comm-kpi-icon">💬</div>
+        <div class="comm-kpi-data">
+          <div class="comm-kpi-val">{{ shop_data.counts.sms_dispatched }}</div>
+          <div class="comm-kpi-label">{% if is_te %}ద్విభాషా SMS పంపబడ్డాయి{% else %}Bilingual SMS Dispatched{% endif %}</div>
+          <small class="comm-kpi-sub">{% if is_te %}తెలుగు &amp; English టెక్స్ట్ మెసేజ్‌లు{% else %}Telugu &amp; English text alerts{% endif %}</small>
+        </div>
+      </div>
+
+      <!-- 3. Automated Voice IVR Calls -->
+      <div class="comm-kpi-box box-purple">
+        <div class="comm-kpi-icon">📞</div>
+        <div class="comm-kpi-data">
+          <div class="comm-kpi-val">{{ shop_data.counts.voice_calls_made }}</div>
+          <div class="comm-kpi-label">{% if is_te %}ఆటోమేటెడ్ వాయిస్ కాల్స్{% else %}Automated Voice IVR Calls{% endif %}</div>
+          <small class="comm-kpi-sub">{% if is_te %}కీప్యాడ్ ఫోన్లకు నేరుగా కాల్స్{% else %}Automated phone broadcasts{% endif %}</small>
+        </div>
+      </div>
+
+      <!-- 4. Village Announcement -->
+      <div class="comm-kpi-box box-amber">
+        <div class="comm-kpi-icon">📢</div>
+        <div class="comm-kpi-data">
+          <div class="comm-kpi-val">{{ shop_data.counts.no_mobile }}</div>
+          <div class="comm-kpi-label">{% if is_te %}గ్రామ చాటింపు జాబితా{% else %}Village Announcements{% endif %}</div>
+          <small class="comm-kpi-sub">{% if is_te %}మొబైల్ లేని వారి కోసం చాటింపు{% else %}Loudspeaker roster for no-phone{% endif %}</small>
+          <div style="margin-top: 0.5rem;">
+            <a href="{{ url_for('dealer_announcement_list', fps=current_fps) }}" class="btn-kpi-announcement-link" title="Open and print Gram Panchayat Speaker Announcement List">
+              📢 {% if is_te %}చాటింపు జాబితా &amp; ప్రింట్{% else %}View &amp; Print Speaker List{% endif %} &rarr;
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- USER COLLECTION STATUS (Who collected, who not) -->
+  <section class="dealer-card collection-status-card">
+    <div class="card-header-flex">
+      <div>
+        <h3>{% if is_te %}లబ్ధిదారుల సేకరణ స్థితి (ఎవరు తీసుకున్నారు, ఎవరు తీసుకోలేదు){% else %}Beneficiary Collection Status (Who Collected / Not Collected){% endif %}</h3>
+        <div class="counts-summary-line">
+          <span>{% if is_te %}మొత్తం లబ్ధిదారులు:{% else %}Total Beneficiaries:{% endif %} <strong>{{ shop_data.counts.total }}</strong></span> &bull;
+          <span class="text-emerald">{% if is_te %}తీసుకున్నవారు (Collected):{% else %}Collected:{% endif %} <strong>{{ shop_data.counts.collected }}</strong></span> &bull;
+          <span class="text-amber">{% if is_te %}తీసుకోనివారు (Not Collected):{% else %}Not Collected:{% endif %} <strong>{{ shop_data.counts.not_collected }}</strong></span>
+        </div>
+      </div>
+
+      <!-- Filters: All, Collected, Not Collected -->
+      <div class="status-filter-pills">
+        <a href="{{ url_for('dealer_dashboard', fps=current_fps, status='ALL') }}" 
+           class="filter-pill {% if current_status == 'ALL' %}active{% endif %}">
+          {% if is_te %}అందరూ{% else %}All ({{ shop_data.counts.total }}){% endif %}
+        </a>
+        <a href="{{ url_for('dealer_dashboard', fps=current_fps, status='COLLECTED') }}" 
+           class="filter-pill {% if current_status == 'COLLECTED' %}active{% endif %}">
+          {% if is_te %}తీసుకున్నవారు{% else %}Collected ({{ shop_data.counts.collected }}){% endif %}
+        </a>
+        <a href="{{ url_for('dealer_dashboard', fps=current_fps, status='NOT_COLLECTED') }}" 
+           class="filter-pill {% if current_status == 'NOT_COLLECTED' %}active{% endif %}">
+          {% if is_te %}తీసుకోనివారు{% else %}Not Collected ({{ shop_data.counts.not_collected }}){% endif %}
+        </a>
+        <a href="{{ url_for('dealer_announcement_list', fps=current_fps) }}" 
+           class="btn-announcement-pill" title="Open Gram Panchayat Speaker Announcement List for no-mobile users">
+          📢 <strong>{% if is_te %}పంచాయతీ చాటింపు జాబితా (మొబైల్ లేని వారు: {{ shop_data.counts.no_mobile }}){% else %}Speaker Announcement List (No Mobile: {{ shop_data.counts.no_mobile }}){% endif %}</strong> &rarr;
+        </a>
+      </div>
+    </div>
+
+    <!-- Beneficiaries Table -->
+    <div class="table-container-minimal">
+      <table class="minimal-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>{% if is_te %}లబ్ధిదారుని పేరు{% else %}Beneficiary Name{% endif %}</th>
+            <th>{% if is_te %}రేషన్ కార్డు సంఖ్య{% else %}Ration Card{% endif %}</th>
+            <th>{% if is_te %}మొబైల్ సంఖ్య{% else %}Mobile{% endif %}</th>
+            <th>{% if is_te %}గ్రామం{% else %}Village{% endif %}</th>
+            <th>{% if is_te %}కేటాయించిన స్లాట్{% else %}Allocated Slot{% endif %}</th>
+            <th>{% if is_te %}కీప్యాడ్ ఫోన్ అలర్ట్‌లు (SMS &amp; కాల్){% else %}Keypad Phone Alerts (SMS &amp; Call){% endif %}</th>
+            <th>{% if is_te %}సేకరణ స్థితి{% else %}Status{% endif %}</th>
+            <th>{% if is_te %}చర్య{% else %}Action{% endif %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if shop_data.beneficiaries %}
+            {% for b in shop_data.beneficiaries %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td><strong>{{ b.name }}</strong></td>
+                <td><code class="code-pill">{{ b.ration_card_number }}</code></td>
+                <td>
+                  {% if b.registered_mobile %}
+                    <span class="phone-num-pill">📱 {{ b.registered_mobile }}</span>
+                  {% else %}
+                    <span class="no-phone-pill">{% if is_te %}ఫోన్ లేదు{% else %}No Mobile{% endif %}</span>
+                  {% endif %}
+                </td>
+                <td>{{ b.village }}</td>
+                <td>
+                  <small>{{ b.slot_date or '2026-10-08' }} &bull; {{ b.start_time or '08:00 AM' }}</small>
+                </td>
+                <td>
+                  {% if b.has_mobile %}
+                    <div class="keypad-cell-content">
+                      <div class="keypad-channel-tags">
+                        <span class="tag-sms">💬 SMS</span>
+                        <span class="tag-call">📞 కాల్</span>
+                      </div>
+                      <div class="keypad-status-ok">
+                        <span class="dot-green"></span>
+                        <small>{% if is_te %}డెలివరీ అయింది{% else %}Delivered{% endif %}</small>
+                      </div>
+                      <button type="button" class="btn-inspect-alert" onclick='openKeypadModal({{ b|tojson|safe }})' title="View SMS and Listen to Voice Call">
+                        👁️ {% if is_te %}చూడండి &amp; వినండి{% else %}View &amp; Listen{% endif %}
+                      </button>
+                    </div>
+                  {% else %}
+                    <div class="keypad-cell-content">
+                      <span class="tag-announcement">📢 {% if is_te %}గ్రామ చాటింపు{% else %}Village Broadcast{% endif %}</span>
+                      <small class="text-muted">{% if is_te %}చాటింపు జాబితాలో ఉంది{% else %}In Loudspeaker Roster{% endif %}</small>
+                      <a href="{{ url_for('dealer_announcement_list', fps=current_fps) }}" class="link-speaker-view" title="View in Speaker Announcement List">
+                        👁️ {% if is_te %}చాటింపులో చూడండి{% else %}View in Speaker List{% endif %} &rarr;
+                      </a>
+                    </div>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if b.distribution_status == 'COMPLETED' %}
+                    <span class="status-badge-collected">
+                      ✓ {% if is_te %}సేకరించబడింది{% else %}Collected{% endif %}
+                    </span>
+                  {% else %}
+                    <span class="status-badge-pending">
+                      ⏳ {% if is_te %}సేకరించలేదు{% else %}Not Collected{% endif %}
+                    </span>
+                  {% endif %}
+                </td>
+                <td>
+                  <form action="{{ url_for('dealer_toggle_status', ben_id=b.id) }}" method="POST" style="margin: 0;">
+                    <input type="hidden" name="fps" value="{{ current_fps }}">
+                    <input type="hidden" name="status_filter" value="{{ current_status }}">
+                    <button type="submit" class="btn-toggle-status" title="Toggle Collection Status">
+                      {% if b.distribution_status == 'COMPLETED' %}
+                        {% if is_te %}గుర్తు తీసివేయండి{% else %}Mark Pending{% endif %}
+                      {% else %}
+                        {% if is_te %}సేకరించినట్లు గుర్తించు{% else %}Mark Collected{% endif %}
+                      {% endif %}
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="9" class="text-center text-muted py-4">
+                {% if is_te %}ఈ వర్గంలో లబ్ధిదారులు లేరు.{% else %}No beneficiaries match the current filter.{% endif %}
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+  </section>
+
+  <!-- KEYPAD PHONE ALERT INSPECTION MODAL -->
+  <div id="keypad-alert-modal" class="modal-overlay" style="display: none;" onclick="closeKeypadModal(event)">
+    <div class="modal-card-box" onclick="event.stopPropagation()">
+      <div class="modal-header-top">
+        <div>
+          <span class="modal-badge-keypad">📟 {% if is_te %}సాధారణ కీప్యాడ్ ఫోన్ అలర్ట్ (స్మార్ట్‌ఫోన్ లేదు){% else %}Basic Keypad Phone Alert (No Smartphone){% endif %}</span>
+          <h3 id="modal-ben-name" class="modal-heading-text">--</h3>
+        </div>
+        <button type="button" class="btn-modal-close" onclick="closeKeypadModal()">&times;</button>
+      </div>
+
+      <div class="modal-body-scroll">
+        <!-- Beneficiary key details -->
+        <div class="modal-meta-grid">
+          <div class="meta-card-item">
+            <span class="meta-label">{% if is_te %}రేషన్ కార్డు సంఖ్య{% else %}Ration Card{% endif %}</span>
+            <strong id="modal-card-no" class="font-mono">--</strong>
+          </div>
+          <div class="meta-card-item">
+            <span class="meta-label">{% if is_te %}నమోదిత మొబైల్ సంఖ్య{% else %}Mobile Number{% endif %}</span>
+            <strong id="modal-mobile-no">--</strong>
+          </div>
+          <div class="meta-card-item">
+            <span class="meta-label">{% if is_te %}కేటాయించిన సమయం{% else %}Allocated Slot Time{% endif %}</span>
+            <strong id="modal-slot-time" class="text-emerald">--</strong>
+          </div>
+          <div class="meta-card-item">
+            <span class="meta-label">{% if is_te %}పరికర వర్గం{% else %}Device Category{% endif %}</span>
+            <span class="font-semibold text-blue">📟 {% if is_te %}కీప్యాడ్ ఫీచర్ ఫోన్ (Offline){% else %}Keypad / Basic Phone (Offline){% endif %}</span>
+          </div>
+        </div>
+
+        <!-- Offline notice -->
+        <div class="modal-offline-notice">
+          <span class="notice-icon">ℹ️</span>
+          <div class="notice-text">
+            <strong>{% if is_te %}ఈ లబ్ధిదారునికి స్మార్ట్‌ఫోన్ లేదా ఇంటర్నెట్ సదుపాయం లేదు.{% else %}This citizen uses a basic keypad phone without smartphone or internet access.{% endif %}</strong>
+            <p>{% if is_te %}స్లాట్ కేటాయింపు సమయానికి రేషన్ దుకాణానికి రావడం కొరకు, ఈ కింది ద్విభాషా SMS మరియు ఆటోమేటెడ్ వాయిస్ కాల్ నేరుగా వారి ఫోన్‌కు చేరవేయబడ్డాయి.{% else %}Automated bilingual SMS and IVR voice calls are dispatched directly to their phone so they collect ration without needing any app.{% endif %}</p>
+          </div>
+        </div>
+
+        <!-- 1. SMS Section -->
+        <div class="modal-section-card">
+          <div class="section-card-header">
+            <span>💬 <strong>{% if is_te %}1. ద్విభాషా SMS టెక్స్ట్ (Bilingual SMS){% else %}1. Bilingual SMS Message{% endif %}</strong></span>
+            <span class="badge-status-ok">✓ {% if is_te %}డెలివరీ చేయబడింది{% else %}Delivered{% endif %}</span>
+          </div>
+          <div class="sms-content-box">
+            <div class="sms-sub-lang">తెలుగు SMS (Telugu):</div>
+            <p id="modal-sms-te" class="sms-bubble-text">--</p>
+            <div class="sms-sub-lang" style="margin-top: 0.75rem;">English SMS:</div>
+            <p id="modal-sms-en" class="sms-bubble-text">--</p>
+          </div>
+        </div>
+
+        <!-- 2. Voice IVR Call Section -->
+        <div class="modal-section-card">
+          <div class="section-card-header">
+            <span>📞 <strong>{% if is_te %}2. ఆటోమేటెడ్ వాయిస్ IVR కాల్ (Automated Voice Call){% else %}2. Automated Voice IVR Call{% endif %}</strong></span>
+            <span class="badge-status-ok">✓ {% if is_te %}కాల్ పూర్తయింది{% else %}Call Answered &amp; Delivered{% endif %}</span>
+          </div>
+
+          <div class="voice-content-box">
+            <div class="sms-sub-lang">తెలుగు వాయిస్ స్క్రిప్ట్ (Telugu Voice Script):</div>
+            <p id="modal-voice-te" class="voice-bubble-text">--</p>
+            <div class="sms-sub-lang" style="margin-top: 0.75rem;">English Voice Script:</div>
+            <p id="modal-voice-en" class="voice-bubble-text">--</p>
+          </div>
+
+          <!-- Audio Voice Player Bar -->
+          <div class="voice-player-bar">
+            <div class="player-controls">
+              <button type="button" class="btn-listen-voice" id="btn-play-voice-call" onclick="togglePlayVoiceCall()">
+                <span id="speech-icon">🔊</span> <span id="speech-label">{% if is_te %}వాయిస్ కాల్ వినండి (Play Voice Call){% else %}Listen Voice Call Audio{% endif %}</span>
+              </button>
+              <div id="speech-wave-box" class="speech-waves" style="display: none;">
+                <span class="bar bar1"></span><span class="bar bar2"></span><span class="bar bar3"></span><span class="bar bar4"></span>
+                <span class="wave-label">{% if is_te %}వాయిస్ కాల్ ప్లే అవుతోంది...{% else %}Playing automated call...{% endif %}</span>
+              </div>
+            </div>
+
+            <div class="lang-selector-box">
+              <label for="select-voice-lang" class="sr-only">Voice Language</label>
+              <select id="select-voice-lang" class="select-voice-lang" onchange="onVoiceLangChange()">
+                <option value="te" selected>తెలుగు (Telugu Voice)</option>
+                <option value="en">English (English Voice)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer-clean">
+        <button type="button" class="btn-resend-now" onclick="resendKeypadAlert()">
+          <span>📤</span> {% if is_te %}SMS &amp; కాల్ మళ్లీ పంపండి (Resend Alert){% else %}Resend SMS &amp; Voice Call{% endif %}
+        </button>
+        <button type="button" class="btn-modal-dismiss" onclick="closeKeypadModal()">
+          {% if is_te %}మూసివేయండి{% else %}Close{% endif %}
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast Notification Wrapper -->
+  <div id="dealer-toast" class="dealer-toast" style="display: none;"></div>
+
+  <!-- Dealer Sign Out Row at Bottom -->
+  <div class="dealer-bottom-signout-row">
+    <a href="{{ url_for('logout') }}" class="btn-signout" id="btn-dealer-signout">
+      <span>🚪</span> {% if is_te %}నిష్క్రమించండి (Sign Out){% else %}Sign Out{% endif %}
+    </a>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const jurisdictionData = {{ jurisdiction|tojson }};
+  const allDealers = {{ all_dealers|tojson }};
+  const currentFps = "{{ current_fps }}";
+
+  function populateDropdowns() {
+    const distSelect = document.getElementById('select-district');
+    const mandalSelect = document.getElementById('select-mandal');
+    const villageSelect = document.getElementById('select-village');
+    const fpsSelect = document.getElementById('select-fps');
+
+    if (!jurisdictionData || jurisdictionData.length === 0) return;
+
+    let activeDist = jurisdictionData[0];
+    let activeMandal = activeDist.mandals ? activeDist.mandals[0] : null;
+    let activeVillage = activeMandal && activeMandal.villages ? activeMandal.villages[0] : null;
+
+    // Locate active mandal and village for currentFps
+    for (const d of jurisdictionData) {
+      if (!d.mandals) continue;
+      for (const m of d.mandals) {
+        if (!m.villages) continue;
+        for (const v of m.villages) {
+          if (v.fps === currentFps) {
+            activeDist = d;
+            activeMandal = m;
+            activeVillage = v;
+            break;
+          }
+        }
+      }
+    }
+
+    if (distSelect) distSelect.value = activeDist.district_id;
+
+    // Populate Mandals
+    if (mandalSelect && activeDist.mandals) {
+      mandalSelect.innerHTML = '';
+      activeDist.mandals.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.mandal;
+        opt.textContent = m.mandal;
+        if (activeMandal && m.mandal === activeMandal.mandal) opt.selected = true;
+        mandalSelect.appendChild(opt);
+      });
+    }
+
+    // Populate Villages
+    if (villageSelect && activeMandal && activeMandal.villages) {
+      villageSelect.innerHTML = '';
+      activeMandal.villages.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.village;
+        opt.textContent = v.village;
+        opt.dataset.fps = v.fps;
+        if (activeVillage && v.village === activeVillage.village) opt.selected = true;
+        villageSelect.appendChild(opt);
+      });
+    }
+
+    if (fpsSelect) fpsSelect.value = currentFps;
+  }
+
+  function onDistrictChange() {
+    const distSelect = document.getElementById('select-district');
+    const dist = jurisdictionData.find(d => d.district_id === distSelect.value) || jurisdictionData[0];
+    const mandalSelect = document.getElementById('select-mandal');
+    mandalSelect.innerHTML = '';
+    if (dist && dist.mandals) {
+      dist.mandals.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.mandal;
+        opt.textContent = m.mandal;
+        mandalSelect.appendChild(opt);
+      });
+    }
+    onMandalChange();
+  }
+
+  function onMandalChange() {
+    const distSelect = document.getElementById('select-district');
+    const dist = jurisdictionData.find(d => d.district_id === distSelect.value) || jurisdictionData[0];
+    const mandalSelect = document.getElementById('select-mandal');
+    const mandal = (dist.mandals || []).find(m => m.mandal === mandalSelect.value) || (dist.mandals ? dist.mandals[0] : null);
+    const villageSelect = document.getElementById('select-village');
+    villageSelect.innerHTML = '';
+    if (mandal && mandal.villages) {
+      mandal.villages.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.village;
+        opt.textContent = v.village;
+        opt.dataset.fps = v.fps;
+        villageSelect.appendChild(opt);
+      });
+    }
+    onVillageChange();
+  }
+
+  function onVillageChange() {
+    const villageSelect = document.getElementById('select-village');
+    const selectedOpt = villageSelect.options[villageSelect.selectedIndex];
+    if (selectedOpt && selectedOpt.dataset.fps) {
+      const targetFps = selectedOpt.dataset.fps;
+      window.location.href = "{{ url_for('dealer_dashboard') }}?fps=" + targetFps;
+    }
+  }
+
+  function onFpsChange() {
+    const fpsVal = document.getElementById('select-fps').value;
+    window.location.href = "{{ url_for('dealer_dashboard') }}?fps=" + fpsVal;
+  }
+
+  // Keypad Modal & Audio Speech Synthesis
+  let currentModalBen = null;
+  let isSpeechPlaying = false;
+  let activeUtterance = null;
+
+  function openKeypadModal(ben) {
+    currentModalBen = ben;
+    document.getElementById('modal-ben-name').textContent = ben.name + (ben.village ? ' (' + ben.village + ')' : '');
+    document.getElementById('modal-card-no').textContent = ben.ration_card_number;
+    document.getElementById('modal-mobile-no').textContent = ben.registered_mobile || 'No Mobile';
+    document.getElementById('modal-slot-time').textContent = (ben.slot_date || '2026-10-08') + ' (' + (ben.start_time || '08:00 AM') + ' - ' + (ben.end_time || '10:30 AM') + ')';
+
+    document.getElementById('modal-sms-te').textContent = ben.sms_te || '--';
+    document.getElementById('modal-sms-en').textContent = ben.sms_en || '--';
+    document.getElementById('modal-voice-te').textContent = ben.voice_te || '--';
+    document.getElementById('modal-voice-en').textContent = ben.voice_en || '--';
+
+    stopVoiceSpeech();
+    document.getElementById('keypad-alert-modal').style.display = 'flex';
+  }
+
+  function closeKeypadModal(e) {
+    if (e && e.target && e.target !== document.getElementById('keypad-alert-modal') && !e.target.classList.contains('btn-modal-close') && !e.target.classList.contains('btn-modal-dismiss')) {
+      return;
+    }
+    stopVoiceSpeech();
+    document.getElementById('keypad-alert-modal').style.display = 'none';
+  }
+
+  function togglePlayVoiceCall() {
+    if (isSpeechPlaying) {
+      stopVoiceSpeech();
+    } else {
+      startVoiceSpeech();
+    }
+  }
+
+  function onVoiceLangChange() {
+    if (isSpeechPlaying) {
+      stopVoiceSpeech();
+      startVoiceSpeech();
+    }
+  }
+
+  function startVoiceSpeech() {
+    if (!('speechSynthesis' in window) || !currentModalBen) {
+      showDealerToast('Web Speech API is not supported in this browser.');
+      return;
+    }
+
+    const lang = document.getElementById('select-voice-lang').value;
+    const textToSpeak = lang === 'te' ? (currentModalBen.voice_te || '') : (currentModalBen.voice_en || '');
+
+    window.speechSynthesis.cancel();
+    activeUtterance = new SpeechSynthesisUtterance(textToSpeak);
+    activeUtterance.lang = lang === 'te' ? 'te-IN' : 'en-IN';
+    activeUtterance.rate = 0.95;
+
+    activeUtterance.onstart = () => {
+      isSpeechPlaying = true;
+      const icon = document.getElementById('speech-icon');
+      const label = document.getElementById('speech-label');
+      const wave = document.getElementById('speech-wave-box');
+      if (icon) icon.textContent = '⏹️';
+      if (label) label.textContent = 'ఆపండి (Stop Voice Call)';
+      if (wave) wave.style.display = 'inline-flex';
+    };
+
+    activeUtterance.onend = () => {
+      stopVoiceSpeech();
+    };
+
+    activeUtterance.onerror = () => {
+      stopVoiceSpeech();
+    };
+
+    window.speechSynthesis.speak(activeUtterance);
+  }
+
+  function stopVoiceSpeech() {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    isSpeechPlaying = false;
+    const icon = document.getElementById('speech-icon');
+    const label = document.getElementById('speech-label');
+    const wave = document.getElementById('speech-wave-box');
+    if (icon) icon.textContent = '🔊';
+    if (label) label.textContent = 'వాయిస్ కాల్ వినండి (Play Voice Call)';
+    if (wave) wave.style.display = 'none';
+  }
+
+  function resendKeypadAlert() {
+    if (!currentModalBen) return;
+    showDealerToast('✓ SMS మరియు ఆటోమేటెడ్ వాయిస్ కాల్ విజయవంతంగా తిరిగి పంపబడ్డాయి! (Alert Dispatched to ' + (currentModalBen.registered_mobile || '') + ')');
+  }
+
+  function showDealerToast(msg) {
+    const toast = document.getElementById('dealer-toast');
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.style.display = 'block';
+    toast.style.opacity = '1';
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 300ms ease';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 300);
+    }, 3200);
+  }
+
+  document.addEventListener('DOMContentLoaded', populateDropdowns);
+</script>
+{% endblock %}

@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Notifications - Aahara Setu{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><span>📢</span> Multimodal Notification Management</h1>
+      <p class="page-desc">Trigger and audit automated bilingual SMS, IVR voice calls, and village announcement broadcasts.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn btn-primary" onclick="openSendModal()">
+        <span>📤</span> Dispatch Notification
+      </button>
+    </div>
+  </div>
+
+  <!-- Notification Channel Breakdown Cards -->
+  <div class="metrics-grid mb-4">
+    <div class="stat-card stat-cyan">
+      <div class="stat-header">
+        <span class="stat-title">SMS Notifications</span>
+        <span class="stat-icon">💬</span>
+      </div>
+      <div class="stat-value">Active</div>
+      <div class="stat-sub">Bilingual English &amp; Telugu text delivery</div>
+    </div>
+
+    <div class="stat-card stat-purple">
+      <div class="stat-header">
+        <span class="stat-title">Automated Voice IVR</span>
+        <span class="stat-icon">📞</span>
+      </div>
+      <div class="stat-value">Ready</div>
+      <div class="stat-sub">Automated citizen phone broadcast</div>
+    </div>
+
+    <div class="stat-card stat-amber">
+      <div class="stat-header">
+        <span class="stat-title">Village Announcement</span>
+        <span class="stat-icon">📢</span>
+      </div>
+      <div class="stat-value">Synced</div>
+      <div class="stat-sub">Panchayat &amp; PA loudspeaker roster</div>
+    </div>
+  </div>
+
+  <!-- Dispatch History Table -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">
+        <span>📜</span> Notification Dispatch Audit Trail
+        <span class="badge badge-light ml-2">{{ notifications|length }} Logs</span>
+      </h3>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Log ID</th>
+              <th>Timestamp</th>
+              <th>Beneficiary Name</th>
+              <th>Card / Mobile</th>
+              <th>Channel</th>
+              <th>Delivery Status</th>
+              <th>Dispatched Content</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for n in notifications %}
+            <tr>
+              <td>#{{ n.id }}</td>
+              <td><small>{{ n.created_at }}</small></td>
+              <td><strong>{{ n.beneficiary_name }}</strong></td>
+              <td>
+                <code>{{ n.ration_card_number }}</code>
+                <div class="text-xs text-muted">{{ n.registered_mobile or 'No Mobile' }}</div>
+              </td>
+              <td>
+                {% if 'SMS' in n.channel %}
+                  <span class="badge badge-info">💬 {{ n.channel }}</span>
+                {% elif 'VOICE' in n.channel %}
+                  <span class="badge badge-purple">📞 {{ n.channel }}</span>
+                {% else %}
+                  <span class="badge badge-warning">📢 {{ n.channel }}</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge badge-success">✓ {{ n.status }}</span>
+              </td>
+              <td>
+                <div class="text-xs" style="max-width: 320px;">{{ n.message }}</div>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" class="text-center text-muted p-4">No notification events logged yet.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DISPATCH NOTIFICATION MODAL -->
+<div id="modal-send-notification" class="modal-backdrop">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3><span>📤</span> Send Multimodal Notification</h3>
+      <button type="button" class="modal-close" onclick="closeModal('modal-send-notification')">&times;</button>
+    </div>
+    <form action="{{ url_for('send_notification') }}" method="POST">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Target Beneficiary *</label>
+          <select name="beneficiary_id" class="form-control" required>
+            {% for b in beneficiaries %}
+              <option value="{{ b.id }}">
+                {{ b.name }} ({{ b.ration_card_number }}) - Mobile: {{ b.registered_mobile or 'None' }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Notification Channel *</label>
+          <select name="channel" class="form-control" required>
+            <option value="SMS_TELUGU" selected>SMS (Telugu / తెలుగు)</option>
+            <option value="SMS_ENGLISH">SMS (English)</option>
+            <option value="VOICE_CALL_TELUGU">Automated Voice Call (Telugu IVR)</option>
+            <option value="VOICE_CALL_ENGLISH">Automated Voice Call (English IVR)</option>
+            <option value="ANNOUNCEMENT_LIST">Village Announcement List Broadcast</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Custom Notification Text (Leave blank for default slot template)</label>
+          <textarea name="message" class="form-control" rows="3" placeholder="Slot notification message..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-send-notification')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Dispatch Now</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openSendModal() {
+  document.getElementById('modal-send-notification').classList.add('active');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+</script>
+{% endblock %}

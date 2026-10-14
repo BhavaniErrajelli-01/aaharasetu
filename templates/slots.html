@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}Slot Allocation Management - Aahara Setu{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><span>⏰</span> Slot Allocation &amp; Capacity Control</h1>
+      <p class="page-desc">Schedule distribution windows, balance shop capacities, and reallocate missed beneficiaries.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn btn-primary" onclick="openCreateSlotModal()">
+        <span>➕</span> Create New Slot
+      </button>
+      <form action="{{ url_for('auto_allocate') }}" method="POST" style="display:inline;">
+        <button type="submit" class="btn btn-dark">
+          <span>⚡</span> Auto-Allocate Unassigned
+        </button>
+      </form>
+      <form action="{{ url_for('reallocate_missed') }}" method="POST" style="display:inline;">
+        <button type="submit" class="btn btn-warning">
+          <span>🔄</span> Reallocate Missed
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Slots Cards Grid -->
+  <div class="slots-grid">
+    {% for s in slots %}
+    {% set pct = ((s.assigned_count / s.capacity) * 100)|round|int if s.capacity > 0 else 0 %}
+    <div class="slot-card">
+      <div class="slot-card-header">
+        <div>
+          <span class="slot-badge-id">Slot #{{ s.id }}</span>
+          <h3 class="slot-card-date">📅 {{ s.slot_date }}</h3>
+          <div class="slot-card-time">⏰ {{ s.start_time }} - {{ s.end_time }}</div>
+        </div>
+        <div>
+          {% if s.remaining_capacity <= 0 %}
+            <span class="badge badge-danger">Capacity Full</span>
+          {% else %}
+            <span class="badge badge-success">{{ s.remaining_capacity }} Seats Free</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="slot-card-body">
+        <div class="slot-stat-row">
+          <span>Assigned / Capacity:</span>
+          <strong>{{ s.assigned_count }} / {{ s.capacity }}</strong>
+        </div>
+        <div class="progress-wrap mb-3">
+          <div class="progress-bar" style="width: {{ pct }}%;"></div>
+        </div>
+
+        <div class="slot-stat-chips">
+          <span class="chip-sm chip-success">Completed: {{ s.completed_count or 0 }}</span>
+          <span class="chip-sm chip-danger">Missed: {{ s.missed_count or 0 }}</span>
+          <span class="chip-sm chip-warning">Reallocated: {{ s.reallocated_count or 0 }}</span>
+        </div>
+      </div>
+
+      <div class="slot-card-footer">
+        <button type="button" class="btn btn-xs btn-outline-primary" onclick="openAssignModal({{ s.id }})">
+          ➕ Assign Citizen
+        </button>
+        <form action="{{ url_for('delete_slot', slot_id=s.id) }}" method="POST" 
+              onsubmit="return confirm('Delete Slot #{{ s.id }}?');" style="display:inline;">
+          <button type="submit" class="btn btn-xs btn-outline-danger">🗑️ Delete</button>
+        </form>
+      </div>
+    </div>
+    {% else %}
+    <div class="col-12 text-center text-muted p-5 card">
+      No slots configured yet. Click "Create New Slot" to start.
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Beneficiary Slot Assignment & Status Tracker Table -->
+  <div class="card mt-4">
+    <div class="card-header">
+      <h3 class="card-title"><span>📋</span> Master Distribution Status Management</h3>
+      <div class="text-sm text-muted">
+        Supported Statuses: 
+        <span class="badge badge-primary">ASSIGNED</span>
+        <span class="badge badge-info">ARRIVED</span>
+        <span class="badge badge-success">COMPLETED</span>
+        <span class="badge badge-danger">MISSED</span>
+        <span class="badge badge-warning">REALLOCATED</span>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Ration Card</th>
+              <th>Beneficiary Name</th>
+              <th>FPS Shop</th>
+              <th>Slot Assigned</th>
+              <th>Current Status</th>
+              <th>Arrival / Fulfillment</th>
+              <th>Quick Status Transition</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in beneficiaries %}
+            {% if b.distribution_record_id %}
+            <tr>
+              <td><code>{{ b.ration_card_number }}</code></td>
+              <td><strong>{{ b.name }}</strong></td>
+              <td>{{ b.fps_shop_number }}</td>
+              <td>
+                {% if b.slot_date %}
+                  <div>📅 {{ b.slot_date }}</div>
+                  <small class="text-muted">⏰ {{ b.start_time }} - {{ b.end_time }}</small>
+                {% else %}
+                  <span class="text-muted">Unassigned</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if b.distribution_status == 'COMPLETED' %}
+                  <span class="badge badge-success">COMPLETED</span>
+                {% elif b.distribution_status == 'ARRIVED' %}
+                  <span class="badge badge-info">ARRIVED</span>
+                {% elif b.distribution_status == 'ASSIGNED' %}
+                  <span class="badge badge-primary">ASSIGNED</span>
+                {% elif b.distribution_status == 'MISSED' %}
+                  <span class="badge badge-danger">MISSED</span>
+                {% elif b.distribution_status == 'REALLOCATED' %}
+                  <span class="badge badge-warning">REALLOCATED</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if b.distribution_time %}
+                  <span class="text-success text-xs font-semibold">Dispensed at {{ b.distribution_time }}</span>
+                {% elif b.arrival_time %}
+                  <span class="text-info text-xs">Arrived at {{ b.arrival_time }}</span>
+                {% else %}
+                  <span class="text-muted text-xs">Pending arrival</span>
+                {% endif %}
+              </td>
+              <td>
+                <form action="{{ url_for('update_distribution') }}" method="POST" class="d-inline-flex gap-1">
+                  <input type="hidden" name="record_id" value="{{ b.distribution_record_id }}">
+                  <input type="hidden" name="redirect_to" value="admin_slots">
+                  
+                  <select name="status" class="form-control form-control-xs" onchange="this.form.submit()">
+                    <option value="ASSIGNED" {% if b.distribution_status == 'ASSIGNED' %}selected{% endif %}>ASSIGNED</option>
+                    <option value="ARRIVED" {% if b.distribution_status == 'ARRIVED' %}selected{% endif %}>ARRIVED</option>
+                    <option value="COMPLETED" {% if b.distribution_status == 'COMPLETED' %}selected{% endif %}>COMPLETED</option>
+                    <option value="MISSED" {% if b.distribution_status == 'MISSED' %}selected{% endif %}>MISSED</option>
+                    <option value="REALLOCATED" {% if b.distribution_status == 'REALLOCATED' %}selected{% endif %}>REALLOCATED</option>
+                  </select>
+                </form>
+              </td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE SLOT MODAL -->
+<div id="modal-create-slot" class="modal-backdrop">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3><span>➕</span> Create Distribution Slot</h3>
+      <button type="button" class="modal-close" onclick="closeModal('modal-create-slot')">&times;</button>
+    </div>
+    <form action="{{ url_for('create_slot') }}" method="POST">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Slot Date *</label>
+          <input type="date" name="slot_date" class="form-control" required value="2026-10-12">
+        </div>
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label>Start Time *</label>
+            <input type="text" name="start_time" class="form-control" placeholder="Start Time (HH:MM AM/PM)" required>
+          </div>
+          <div class="form-group col-6">
+            <label>End Time *</label>
+            <input type="text" name="end_time" class="form-control" placeholder="End Time (HH:MM AM/PM)" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Capacity (Max Beneficiaries) *</label>
+          <input type="number" name="capacity" class="form-control" value="8" min="1" max="50" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-create-slot')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Slot</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ASSIGN CITIZEN TO SLOT MODAL -->
+<div id="modal-assign-slot" class="modal-backdrop">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3><span>👤</span> Assign Citizen to Slot</h3>
+      <button type="button" class="modal-close" onclick="closeModal('modal-assign-slot')">&times;</button>
+    </div>
+    <form action="{{ url_for('assign_slot') }}" method="POST">
+      <input type="hidden" id="assign_slot_id" name="slot_id" value="">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Select Beneficiary *</label>
+          <select name="beneficiary_id" class="form-control" required>
+            {% for b in beneficiaries %}
+              <option value="{{ b.id }}">
+                {{ b.name }} ({{ b.ration_card_number }}) - FPS: {{ b.fps_shop_number }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Assignment Status</label>
+          <select name="assignment_status" class="form-control">
+            <option value="ASSIGNED" selected>ASSIGNED</option>
+            <option value="ARRIVED">ARRIVED</option>
+            <option value="COMPLETED">COMPLETED</option>
+            <option value="MISSED">MISSED</option>
+            <option value="REALLOCATED">REALLOCATED</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-assign-slot')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Confirm Allocation</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openCreateSlotModal() {
+  document.getElementById('modal-create-slot').classList.add('active');
+}
+
+function openAssignModal(slotId) {
+  document.getElementById('assign_slot_id').value = slotId;
+  document.getElementById('modal-assign-slot').classList.add('active');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Beneficiaries - Aahara Setu{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><span>👥</span> Beneficiary Management</h1>
+      <p class="page-desc">Maintain registered ration card holders, FPS affiliations, and contact details.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn btn-primary" onclick="openAddModal()">
+        <span>➕</span> Add New Beneficiary
+      </button>
+    </div>
+  </div>
+
+  <!-- Search & Filter Controls Card -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <form method="GET" action="{{ url_for('admin_beneficiaries') }}" class="filter-form">
+        <div class="filter-grid">
+          <div class="form-group mb-0">
+            <label class="form-label-sm">Search Keyword</label>
+            <input type="text" name="search" class="form-control form-control-sm" 
+                   placeholder="Search Name, Ration Card, Mobile..." value="{{ current_search }}">
+          </div>
+
+          <div class="form-group mb-0">
+            <label class="form-label-sm">Fair Price Shop (FPS)</label>
+            <select name="fps" class="form-control form-control-sm">
+              <option value="ALL">All Fair Price Shops</option>
+              {% for f in fps_list %}
+                <option value="{{ f }}" {% if current_fps == f %}selected{% endif %}>{{ f }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group mb-0">
+            <label class="form-label-sm">Village / Region</label>
+            <select name="village" class="form-control form-control-sm">
+              <option value="ALL">All Villages</option>
+              {% for v in village_list %}
+                <option value="{{ v }}" {% if current_village == v %}selected{% endif %}>{{ v }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="filter-btn-wrap">
+            <button type="submit" class="btn btn-dark btn-sm">Filter</button>
+            <a href="{{ url_for('admin_beneficiaries') }}" class="btn btn-outline-secondary btn-sm">Reset</a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Beneficiaries Table Card -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">
+        <span>📋</span> Beneficiary Directory
+        <span class="badge badge-light ml-2">{{ beneficiaries|length }} Records</span>
+      </h3>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Beneficiary Name</th>
+              <th>Ration Card #</th>
+              <th>FPS Shop</th>
+              <th>Registered Mobile</th>
+              <th>Village / Region</th>
+              <th>Allocated Slot</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in beneficiaries %}
+            <tr>
+              <td>#{{ b.id }}</td>
+              <td>
+                <strong>{{ b.name }}</strong>
+                <div class="text-xs text-muted">Lang: {{ b.preferred_language|upper }}</div>
+              </td>
+              <td><code>{{ b.ration_card_number }}</code></td>
+              <td><span class="badge badge-light">{{ b.fps_shop_number }}</span></td>
+              <td>
+                {% if b.registered_mobile %}
+                  <span>📱 {{ b.registered_mobile }}</span>
+                {% else %}
+                  <span class="text-muted text-xs">No Mobile</span>
+                {% endif %}
+              </td>
+              <td>{{ b.village or 'N/A' }}</td>
+              <td>
+                {% if b.slot_date %}
+                  <div class="text-sm font-semibold">{{ b.slot_date }}</div>
+                  <div class="text-xs text-muted">{{ b.start_time }} - {{ b.end_time }}</div>
+                {% else %}
+                  <span class="badge badge-warning">Unassigned</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if b.distribution_status == 'COMPLETED' %}
+                  <span class="badge badge-success">COMPLETED</span>
+                {% elif b.distribution_status == 'ARRIVED' %}
+                  <span class="badge badge-info">ARRIVED</span>
+                {% elif b.distribution_status == 'ASSIGNED' %}
+                  <span class="badge badge-primary">ASSIGNED</span>
+                {% elif b.distribution_status == 'MISSED' %}
+                  <span class="badge badge-danger">MISSED</span>
+                {% elif b.distribution_status == 'REALLOCATED' %}
+                  <span class="badge badge-warning">REALLOCATED</span>
+                {% else %}
+                  <span class="badge badge-secondary">PENDING</span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="action-btn-group">
+                  <button type="button" class="btn btn-xs btn-outline-primary" 
+                          onclick='openEditModal({{ b|tojson|safe }})' title="Edit">
+                    ✏️ Edit
+                  </button>
+                  <form action="{{ url_for('delete_beneficiary', ben_id=b.id) }}" method="POST" 
+                        onsubmit="return confirm('Are you sure you want to delete beneficiary {{ b.name }}?');" style="display:inline;">
+                    <button type="submit" class="btn btn-xs btn-outline-danger" title="Delete">🗑️</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="9" class="text-center text-muted p-4">No beneficiaries found matching criteria.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD BENEFICIARY MODAL -->
+<div id="modal-add-beneficiary" class="modal-backdrop">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3><span>➕</span> Add New Beneficiary</h3>
+      <button type="button" class="modal-close" onclick="closeModal('modal-add-beneficiary')">&times;</button>
+    </div>
+    <form action="{{ url_for('add_beneficiary') }}" method="POST">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Ration Card Number *</label>
+          <input type="text" name="ration_card_number" class="form-control" placeholder="Enter Ration Card Number" required>
+        </div>
+        <div class="form-group">
+          <label>Full Beneficiary Name *</label>
+          <input type="text" name="name" class="form-control" placeholder="Enter Full Beneficiary Name" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label>Fair Price Shop (FPS) *</label>
+            <input type="text" name="fps_shop_number" class="form-control" placeholder="Enter FPS Shop Number" required>
+          </div>
+          <div class="form-group col-6">
+            <label>Registered Mobile</label>
+            <input type="tel" name="registered_mobile" class="form-control" placeholder="Enter 10-digit Mobile Number">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label>Village / Region</label>
+            <input type="text" name="village" class="form-control" placeholder="Enter Village / Region">
+          </div>
+          <div class="form-group col-6">
+            <label>Preferred Language</label>
+            <select name="preferred_language" class="form-control">
+              <option value="te" selected>Telugu (తెలుగు)</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-add-beneficiary')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Beneficiary</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- EDIT BENEFICIARY MODAL -->
+<div id="modal-edit-beneficiary" class="modal-backdrop">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3><span>✏️</span> Edit Beneficiary</h3>
+      <button type="button" class="modal-close" onclick="closeModal('modal-edit-beneficiary')">&times;</button>
+    </div>
+    <form id="form-edit-ben" action="" method="POST">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Ration Card Number *</label>
+          <input type="text" id="edit_card" name="ration_card_number" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label>Full Beneficiary Name *</label>
+          <input type="text" id="edit_name" name="name" class="form-control" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label>Fair Price Shop (FPS) *</label>
+            <input type="text" id="edit_fps" name="fps_shop_number" class="form-control" required>
+          </div>
+          <div class="form-group col-6">
+            <label>Registered Mobile</label>
+            <input type="tel" id="edit_mobile" name="registered_mobile" class="form-control">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-6">
+            <label>Village / Region</label>
+            <input type="text" id="edit_village" name="village" class="form-control">
+          </div>
+          <div class="form-group col-6">
+            <label>Preferred Language</label>
+            <select id="edit_lang" name="preferred_language" class="form-control">
+              <option value="te">Telugu (తెలుగు)</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-edit-beneficiary')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Update Details</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openAddModal() {
+  document.getElementById('modal-add-beneficiary').classList.add('active');
+}
+
+function openEditModal(ben) {
+  document.getElementById('form-edit-ben').action = '/admin/beneficiaries/edit/' + ben.id;
+  document.getElementById('edit_card').value = ben.ration_card_number;
+  document.getElementById('edit_name').value = ben.name;
+  document.getElementById('edit_fps').value = ben.fps_shop_number;
+  document.getElementById('edit_mobile').value = ben.registered_mobile || '';
+  document.getElementById('edit_village').value = ben.village || '';
+  document.getElementById('edit_lang').value = ben.preferred_language || 'te';
+  document.getElementById('modal-edit-beneficiary').classList.add('active');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+</script>
+{% endblock %}

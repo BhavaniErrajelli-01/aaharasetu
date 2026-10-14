@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if is_te %}గ్రామ పంచాయతీ చాటింపు జాబితా - ఆహార సేతు{% else %}Gram Panchayat Speaker Announcement List - Aahara Setu{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="announcement-page-wrapper">
+
+  <!-- Interactive Controls Bar (Hidden during Print) -->
+  <div class="announcement-actions-bar no-print">
+    <div class="actions-left">
+      <a href="{{ url_for('dealer_dashboard', fps=current_fps) }}" class="btn-back-link">
+        <span>←</span> {% if is_te %}డీలర్ డాష్‌బోర్డ్‌కు తిరిగి వెళ్లండి{% else %}Back to Dealer Dashboard{% endif %}
+      </a>
+      <span class="badge-no-mobile-pill">
+        📢 <strong>{{ data.total_count }}</strong> {% if is_te %}మొబైల్ లేని లబ్ధిదారులు{% else %}Beneficiaries without Mobile{% endif %}
+      </span>
+    </div>
+
+    <div class="actions-right">
+      <button type="button" class="btn-test-mic" id="btn-speaker-test" onclick="toggleSpeakerAudio()">
+        <span id="speaker-icon">🔊</span> <span id="speaker-text">{% if is_te %}చాటింపు ఆడియో వినండి (Test Speaker Voice){% else %}Test Loudspeaker Audio{% endif %}</span>
+      </button>
+
+      <button type="button" class="btn-print-main" onclick="window.print()">
+        <span>🖨️</span> <strong>{% if is_te %}చాటింపు జాబితాను ప్రింట్ చేయండి (Print Roster){% else %}Print Announcement List{% endif %}</strong>
+      </button>
+    </div>
+  </div>
+
+  <!-- PRINTABLE DOCUMENT SHEET -->
+  <div class="printable-roster-sheet" id="printable-announcement-sheet">
+
+    <!-- Official Government Header -->
+    <div class="roster-gov-header">
+      <div class="gov-emblem-text">🌾</div>
+      <h2 class="gov-telangana-title">
+        {% if is_te %}తెలంగాణ ప్రభుత్వం — పౌర సరఫరాల శాఖ{% else %}GOVERNMENT OF TELANGANA — CIVIL SUPPLIES DEPARTMENT{% endif %}
+      </h2>
+      <h1 class="roster-main-title">
+        {% if is_te %}గ్రామ పంచాయతీ పబ్లిక్ అడ్రస్ (లౌడ్‌స్పీకర్) చాటింపు జాబితా{% else %}GRAM PANCHAYAT PUBLIC ADDRESS (LOUDSPEAKER) ANNOUNCEMENT ROSTER{% endif %}
+      </h1>
+      <p class="roster-subtitle">
+        {% if is_te %}
+          సాధారణ కీప్యాడ్ ఫోన్ లేదా మొబైల్ సదుపాయం లేని లబ్ధిదారులకు రేషన్ స్లాట్ కేటాయింపు ప్రకటన
+        {% else %}
+          Ration Slot Allocation Announcement for Citizens Without Mobile Phone Access
+        {% endif %}
+      </p>
+    </div>
+
+    <!-- Official Metadata Grid -->
+    <div class="roster-meta-grid">
+      <div class="roster-meta-cell">
+        <span class="meta-field">{% if is_te %}రేషన్ దుకాణం నంబర్ (FPS):{% else %}Fair Price Shop (FPS):{% endif %}</span>
+        <strong class="font-mono">{{ data.fps_shop_number }}</strong>
+      </div>
+      <div class="roster-meta-cell">
+        <span class="meta-field">{% if is_te %}డీలర్ పేరు:{% else %}Dealer Name:{% endif %}</span>
+        <strong>{{ data.dealer_name }}</strong>
+      </div>
+      <div class="roster-meta-cell">
+        <span class="meta-field">{% if is_te %}గ్రామం / పంచాయతీ:{% else %}Village / Panchayat:{% endif %}</span>
+        <strong>{{ data.village }}</strong>
+      </div>
+      <div class="roster-meta-cell">
+        <span class="meta-field">{% if is_te %}మండలం &amp; జిల్లా:{% else %}Mandal &amp; District:{% endif %}</span>
+        <strong>{{ data.mandal }}, {{ data.district }}</strong>
+      </div>
+      <div class="roster-meta-cell">
+        <span class="meta-field">{% if is_te %}ప్రకటన తేదీ:{% else %}Announcement Date:{% endif %}</span>
+        <strong>2026-10-09</strong>
+      </div>
+      <div class="roster-meta-cell">
+        <span class="meta-field">{% if is_te %}మొబైల్ లేని లబ్ధిదారులు:{% else %}No-Mobile Beneficiaries:{% endif %}</span>
+        <strong class="text-blue">{{ data.total_count }} {% if is_te %}మంది{% else %}Citizens{% endif %}</strong>
+      </div>
+    </div>
+
+    <!-- Loudspeaker Announcer Bulletin Script -->
+    <div class="announcer-bulletin-card">
+      <div class="bulletin-header">
+        <span>📢 <strong>{% if is_te %}మైక్ చాటింపు స్క్రిప్ట్ (Loudspeaker Announcer Script){% else %}Official Loudspeaker Announcer Script{% endif %}</strong></span>
+        <small class="bulletin-note">{% if is_te %}(గ్రామ పంచాయతీ మైక్ ద్వారా చదవవలసిన అధికారిక ప్రకటన){% else %}(To be read on Gram Panchayat Loudspeaker System){% endif %}</small>
+      </div>
+      <div class="bulletin-text-box">
+        <p class="bulletin-te">
+          <strong>తెలుగు ప్రకటన:</strong> "{{ data.bulletin_te }}"
+        </p>
+        <p class="bulletin-en" style="margin-top: 0.5rem;">
+          <strong>English Announcement:</strong> "{{ data.bulletin_en }}"
+        </p>
+      </div>
+    </div>
+
+    <!-- Beneficiaries Grouped by Slot Timing -->
+    <div class="roster-table-section">
+      <h3 class="roster-table-heading">
+        📋 {% if is_te %}స్లాట్ సమయాల వారీగా చాటింపు లబ్ధిదారుల వివరాలు (మొబైల్ లేని వారు మాత్రమే){% else %}Beneficiary List by Slot Timings (Only Citizens Without Mobile Numbers){% endif %}
+      </h3>
+
+      {% if data.slot_groups %}
+        {% for group in data.slot_groups %}
+          <div class="slot-group-block">
+            <div class="slot-group-title-bar">
+              <span class="slot-time-badge">⏰ {{ group.timing_label }}</span>
+              <span class="slot-count-badge">{% if is_te %}లబ్ధిదారులు:{% else %}Beneficiaries:{% endif %} {{ group.beneficiaries|length }}</span>
+            </div>
+
+            <table class="roster-table">
+              <thead>
+                <tr>
+                  <th style="width: 45px;">#</th>
+                  <th style="width: 155px;">{% if is_te %}రేషన్ కార్డు సంఖ్య{% else %}Ration Card No.{% endif %}</th>
+                  <th>{% if is_te %}లబ్ధిదారుని పేరు{% else %}Beneficiary Name{% endif %}</th>
+                  <th>{% if is_te %}గ్రామం / ప్రాంతం{% else %}Village / Locality{% endif %}</th>
+                  <th style="width: 165px;">{% if is_te %}కేటాయించిన సమయం{% else %}Allotted Slot Time{% endif %}</th>
+                  <th style="width: 110px;">{% if is_te %}ఉచిత బియ్యం కోటా{% else %}Rice Quota{% endif %}</th>
+                  <th style="width: 140px;" class="print-sign-col">{% if is_te %}సంతకం / వేలిముద్ర{% else %}Signature / Thumb{% endif %}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for b in group.beneficiaries %}
+                  <tr>
+                    <td class="text-center font-mono">{{ b.sl_no }}</td>
+                    <td>
+                      <strong class="font-mono text-primary">{{ b.ration_card_number }}</strong>
+                    </td>
+                    <td>
+                      <div class="ben-name-box">
+                        <strong>{{ b.name }}</strong>
+                        <span class="no-mob-tag">🚫 {% if is_te %}మొబైల్ లేదు{% else %}No Mobile{% endif %}</span>
+                      </div>
+                    </td>
+                    <td>{{ b.village }}</td>
+                    <td>
+                      <span class="slot-time-pill">{{ b.slot_date }} &bull; {{ b.start_time }} - {{ b.end_time }}</span>
+                    </td>
+                    <td class="text-center font-semibold">
+                      {{ (b.rice_quantity_required_kg or 20)|int }} kg <small class="text-green">({% if is_te %}ఉచితం{% else %}Free{% endif %})</small>
+                    </td>
+                    <td class="print-sign-col sign-box-cell">
+                      <div class="sign-dotted-placeholder"></div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="text-muted text-center py-4">
+          {% if is_te %}ఈ దుకాణంలో మొబైల్ లేని లబ్ధిదారులు ఎవరూ లేరు.{% else %}No beneficiaries without mobile found for this Fair Price Shop.{% endif %}
+        </p>
+      {% endif %}
+    </div>
+
+    <!-- Official Verification & Signatory Block -->
+    <div class="roster-signatures-block">
+      <div class="sign-column">
+        <div class="sign-line"></div>
+        <strong>{% if is_te %}గ్రామ పంచాయతీ సర్పంచ్{% else %}Gram Panchayat Sarpanch{% endif %}</strong>
+        <small>{% if is_te %}(సంతకం &amp; అధికారిక ముద్ర){% else %}(Signature &amp; Official Seal){% endif %}</small>
+      </div>
+
+      <div class="sign-column">
+        <div class="sign-line"></div>
+        <strong>{% if is_te %}పంచాయతీ కార్యదర్శి{% else %}Panchayat Secretary{% endif %}</strong>
+        <small>{% if is_te %}(ధృవీకరణ సంతకం){% else %}(Verification Signature){% endif %}</small>
+      </div>
+
+      <div class="sign-column">
+        <div class="sign-line"></div>
+        <strong>{% if is_te %}రేషన్ డీలర్ (FPS: {{ data.fps_shop_number }}){% else %}Fair Price Shop Dealer{% endif %}</strong>
+        <small>{{ data.dealer_name }}</small>
+      </div>
+
+      <div class="sign-column">
+        <div class="sign-line"></div>
+        <strong>{% if is_te %}మైక్ చాటింపుదారుడు{% else %}PA Loudspeaker Announcer{% endif %}</strong>
+        <small>{% if is_te %}(చాటింపు పూర్తి చేసిన సమయం &amp; తేదీ){% else %}(Broadcast Time &amp; Date Recorded){% endif %}</small>
+      </div>
+    </div>
+
+    <!-- Document Footer -->
+    <div class="roster-doc-footer">
+      <p>
+        {% if is_te %}
+          గమనిక: ఈ జాబితా కేవలం సాధారణ కీప్యాడ్ లేదా మొబైల్ ఫోన్ లేని లబ్ధిదారులకు గ్రామ చాటింపు మరియు నోటీస్ బోర్డు సమాచారం కొరకు మాత్రమే. ఆధార్ ఈ-పీఓఎస్ ద్వారా బయోమెట్రిక్ ప్రామాణీకరణ యధావిధిగా కొనసాగుతుంది.
+        {% else %}
+          Note: This roster is officially published for Gram Panchayat loudspeaker broadcasting and notice board publication for citizens without registered mobile devices. Biometric e-PoS distribution applies as per Telangana Civil Supplies guidelines.
+        {% endif %}
+      </p>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let isSpeakerPlaying = false;
+  const bulletinScript = {% if is_te %}{{ (data.bulletin_te or '')|tojson }}{% else %}{{ (data.bulletin_en or '')|tojson }}{% endif %};
+
+  function toggleSpeakerAudio() {
+    if (!('speechSynthesis' in window)) {
+      alert("Speech synthesis is not supported in this browser.");
+      return;
+    }
+
+    if (isSpeakerPlaying) {
+      window.speechSynthesis.cancel();
+      isSpeakerPlaying = false;
+      document.getElementById('speaker-icon').textContent = '🔊';
+      document.getElementById('speaker-text').textContent = {% if is_te %}'చాటింపు ఆడియో వినండి (Test Speaker Voice)'{% else %}'Test Loudspeaker Audio'{% endif %};
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(bulletinScript);
+    utt.lang = {% if is_te %}'te-IN'{% else %}'en-IN'{% endif %};
+    utt.rate = 0.90; // Slower rate suitable for loudspeaker broadcast
+
+    utt.onstart = () => {
+      isSpeakerPlaying = true;
+      document.getElementById('speaker-icon').textContent = '⏹️';
+      document.getElementById('speaker-text').textContent = {% if is_te %}'ఆపండి (Stop Audio)'{% else %}'Stop Speaker Audio'{% endif %};
+    };
+
+    utt.onend = () => {
+      isSpeakerPlaying = false;
+      document.getElementById('speaker-icon').textContent = '🔊';
+      document.getElementById('speaker-text').textContent = {% if is_te %}'చాటింపు ఆడియో వినండి (Test Speaker Voice)'{% else %}'Test Loudspeaker Audio'{% endif %};
+    };
+
+    utt.onerror = () => {
+      isSpeakerPlaying = false;
+      document.getElementById('speaker-icon').textContent = '🔊';
+      document.getElementById('speaker-text').textContent = {% if is_te %}'చాటింపు ఆడియో వినండి (Test Speaker Voice)'{% else %}'Test Loudspeaker Audio'{% endif %};
+    };
+
+    window.speechSynthesis.speak(utt);
+  }
+</script>
+{% endblock %}

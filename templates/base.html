@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="{{ 'te' if is_te else 'en' }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Aahara Setu | ఆహార సేతు{% endblock %}</title>
+  <meta name="description" content="Aahara Setu - Public Distribution System Portal">
+  
+  <!-- Modern Clean Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌾</text></svg>">
+</head>
+<body>
+
+  <!-- Minimal Centered Header (No info above title, centered in Telugu & English) -->
+  <header class="header-minimal-centered">
+    <div class="header-center-box">
+      <h1 class="centered-title">
+        <span class="title-en">Aahara Setu</span>
+        <span class="title-sep">|</span>
+        <span class="title-te">ఆహార సేతు</span>
+      </h1>
+      
+      <!-- Single Option Language Selector (Either English or Telugu, not both simultaneously) -->
+      <div class="single-lang-selector-container">
+        <form action="{{ url_for('set_language') }}" method="GET" id="single-lang-form">
+          <label for="select-lang" class="sr-only">Language / భాష</label>
+          <select name="lang" id="select-lang" class="single-lang-dropdown" onchange="document.getElementById('single-lang-form').submit();" aria-label="Select Language">
+            <option value="en" {% if current_lang != 'te' %}selected{% endif %}>English</option>
+            <option value="te" {% if current_lang == 'te' %}selected{% endif %}>తెలుగు</option>
+          </select>
+        </form>
+      </div>
+    </div>
+  </header>
+
+  <!-- Flash Alerts -->
+  <div class="flash-wrapper">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-chip flash-{{ category }}">
+            <span>{{ message }}</span>
+            <button type="button" class="flash-dismiss" onclick="this.parentElement.remove()">&times;</button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Main Body Content -->
+  <main class="main-container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Minimal Clean Footer -->
+  <footer class="minimal-footer">
+    <p>Aahara Setu &bull; {% if is_te %}పౌర సరఫరాల శాఖ{% else %}Food &amp; Civil Supplies Department{% endif %}</p>
+  </footer>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

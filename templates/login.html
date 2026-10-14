@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if is_te %}లాగిన్ - ఆహార సేతు{% else %}Login - Aahara Setu{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="auth-card-wrapper">
+  <div class="clean-auth-card">
+    
+    <!-- Role Switcher Tabs (Citizen / Dealer) -->
+    <div class="role-tabs-bar" role="tablist">
+      <button type="button" class="role-tab active" id="tab-btn-user" onclick="switchTab('user')" role="tab" aria-selected="true">
+        <span>👤</span> {% if is_te %}వినియోగదారు (User){% else %}Citizen (User){% endif %}
+      </button>
+      <button type="button" class="role-tab" id="tab-btn-dealer" onclick="switchTab('dealer')" role="tab" aria-selected="false">
+        <span>🏢</span> {% if is_te %}డీలర్ (Dealer){% else %}Dealer{% endif %}
+      </button>
+    </div>
+
+    <!-- 1. CITIZEN / USER LOGIN FORM -->
+    <div id="panel-user" class="role-panel active" role="tabpanel">
+      <form action="{{ url_for('login') }}" method="POST" class="minimal-form">
+        <input type="hidden" name="login_type" value="citizen">
+
+        <div class="form-group-clean">
+          <label for="input-ration-card">
+            {% if is_te %}రేషన్ కార్డు సంఖ్య{% else %}Ration Card Number{% endif %}
+          </label>
+          <input 
+            type="text" 
+            id="input-ration-card" 
+            name="ration_card_number" 
+            class="input-clean" 
+            placeholder="{% if is_te %}రేషన్ కార్డు సంఖ్యను నమోదు చేయండి{% else %}Enter Ration Card Number{% endif %}" 
+            required 
+            autofocus 
+            autocomplete="off"
+          >
+        </div>
+
+        <div class="form-group-clean">
+          <label for="input-mobile-number">
+            {% if is_te %}నమోదిత మొబైల్ సంఖ్య{% else %}Registered Mobile Number{% endif %}
+          </label>
+          <input 
+            type="tel" 
+            id="input-mobile-number" 
+            name="registered_mobile" 
+            class="input-clean" 
+            placeholder="{% if is_te %}నమోదిత మొబైల్ సంఖ్యను నమోదు చేయండి{% else %}Enter Registered Mobile Number{% endif %}" 
+            required
+            autocomplete="off"
+          >
+        </div>
+
+        <button type="submit" class="btn-submit-main" id="btn-check-slot">
+          <span>🔍</span> {% if is_te %}కేటాయించిన స్లాట్ వివరాలు చూడండి{% else %}Check Assigned Slot Details{% endif %}
+        </button>
+      </form>
+    </div>
+
+    <!-- 2. DEALER LOGIN FORM -->
+    <div id="panel-dealer" class="role-panel" role="tabpanel" style="display: none;">
+      <form action="{{ url_for('login') }}" method="POST" class="minimal-form">
+        <input type="hidden" name="login_type" value="dealer">
+
+        <div class="form-group-clean">
+          <label for="dealer-username">
+            {% if is_te %}డీలర్ వినియోగదారు పేరు{% else %}Dealer Username{% endif %}
+          </label>
+          <input 
+            type="text" 
+            id="dealer-username" 
+            name="username" 
+            class="input-clean" 
+            placeholder="{% if is_te %}డీలర్ యూజర్‌నేమ్ నమోదు చేయండి{% else %}Enter Dealer Username{% endif %}" 
+            required 
+            autocomplete="username"
+          >
+        </div>
+
+        <div class="form-group-clean">
+          <label for="dealer-password">
+            {% if is_te %}పాస్‌వర్డ్{% else %}Password{% endif %}
+          </label>
+          <input 
+            type="password" 
+            id="dealer-password" 
+            name="password" 
+            class="input-clean" 
+            placeholder="••••••••" 
+            required 
+            autocomplete="current-password"
+          >
+        </div>
+
+        <button type="submit" class="btn-submit-dark" id="btn-dealer-login">
+          <span>🏢</span> {% if is_te %}డీలర్ లాగిన్{% else %}Sign In as Dealer{% endif %}
+        </button>
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function switchTab(role) {
+    const userTab = document.getElementById('tab-btn-user');
+    const dealerTab = document.getElementById('tab-btn-dealer');
+    const userPanel = document.getElementById('panel-user');
+    const dealerPanel = document.getElementById('panel-dealer');
+
+    if (role === 'dealer') {
+      userTab.classList.remove('active');
+      dealerTab.classList.add('active');
+      userTab.setAttribute('aria-selected', 'false');
+      dealerTab.setAttribute('aria-selected', 'true');
+      userPanel.style.display = 'none';
+      dealerPanel.style.display = 'block';
+      const dealerInput = document.getElementById('dealer-username');
+      if (dealerInput) dealerInput.focus();
+    } else {
+      dealerTab.classList.remove('active');
+      userTab.classList.add('active');
+      dealerTab.setAttribute('aria-selected', 'false');
+      userTab.setAttribute('aria-selected', 'true');
+      dealerPanel.style.display = 'none';
+      userPanel.style.display = 'block';
+      const userInput = document.getElementById('input-ration-card');
+      if (userInput) userInput.focus();
+    }
+  }
+</script>
+{% endblock %}

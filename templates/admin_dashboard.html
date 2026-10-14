@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Aahara Setu{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><span>📊</span> Operations Dashboard</h1>
+      <p class="page-desc">Real-time Public Distribution System slot allocation, biometric tracking, and regional analytics.</p>
+    </div>
+    <div class="header-actions">
+      <form action="{{ url_for('auto_allocate') }}" method="POST" style="display:inline;">
+        <button type="submit" class="btn btn-primary btn-sm">
+          <span>⚡</span> Auto-Allocate Slots
+        </button>
+      </form>
+      <form action="{{ url_for('reallocate_missed') }}" method="POST" style="display:inline;">
+        <button type="submit" class="btn btn-warning btn-sm">
+          <span>🔄</span> Reallocate Missed
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Key Metrics Row -->
+  <div class="metrics-grid">
+    <div class="stat-card stat-indigo">
+      <div class="stat-header">
+        <span class="stat-title">Total Beneficiaries</span>
+        <span class="stat-icon">👥</span>
+      </div>
+      <div class="stat-value">{{ reports.total_beneficiaries }}</div>
+      <div class="stat-sub">Active ration cards in system</div>
+    </div>
+
+    <div class="stat-card stat-teal">
+      <div class="stat-header">
+        <span class="stat-title">Active Slots</span>
+        <span class="stat-icon">⏰</span>
+      </div>
+      <div class="stat-value">{{ reports.total_slots }}</div>
+      <div class="stat-sub">Distribution windows configured</div>
+    </div>
+
+    <div class="stat-card stat-emerald">
+      <div class="stat-header">
+        <span class="stat-title">Completed Distributions</span>
+        <span class="stat-icon">✅</span>
+      </div>
+      <div class="stat-value">{{ reports.status_counts.COMPLETED }}</div>
+      <div class="stat-sub">{{ reports.completion_rate }}% Completion Rate</div>
+    </div>
+
+    <div class="stat-card stat-amber">
+      <div class="stat-header">
+        <span class="stat-title">Assigned / Arrived</span>
+        <span class="stat-icon">⏳</span>
+      </div>
+      <div class="stat-value">{{ reports.status_counts.ASSIGNED + reports.status_counts.ARRIVED }}</div>
+      <div class="stat-sub">In queue for collection</div>
+    </div>
+
+    <div class="stat-card stat-rose">
+      <div class="stat-header">
+        <span class="stat-title">Missed Beneficiaries</span>
+        <span class="stat-icon">⚠️</span>
+      </div>
+      <div class="stat-value">{{ reports.status_counts.MISSED }}</div>
+      <div class="stat-sub">Eligible for catch-up slot</div>
+    </div>
+
+    <div class="stat-card stat-purple">
+      <div class="stat-header">
+        <span class="stat-title">Reallocated Slots</span>
+        <span class="stat-icon">🔄</span>
+      </div>
+      <div class="stat-value">{{ reports.status_counts.REALLOCATED }}</div>
+      <div class="stat-sub">Rescheduled evening window</div>
+    </div>
+  </div>
+
+  <!-- Two Column Layout: Slots Overview & Recent Activity -->
+  <div class="dashboard-grid-2">
+    <!-- Active Slots Overview -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><span>⏰</span> Slot Capacity &amp; Occupancy</h3>
+        <a href="{{ url_for('admin_slots') }}" class="btn-link">Manage Slots &rarr;</a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Date &amp; Time</th>
+                <th>Capacity</th>
+                <th>Occupancy</th>
+                <th>Completed</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for slot in slots %}
+              {% set pct = ((slot.assigned_count / slot.capacity) * 100)|round|int if slot.capacity > 0 else 0 %}
+              <tr>
+                <td>
+                  <strong>{{ slot.slot_date }}</strong>
+                  <div class="text-muted text-sm">{{ slot.start_time }} - {{ slot.end_time }}</div>
+                </td>
+                <td>{{ slot.capacity }}</td>
+                <td>
+                  <div class="progress-wrap">
+                    <div class="progress-bar" style="width: {{ pct }}%;"></div>
+                  </div>
+                  <small>{{ slot.assigned_count }} / {{ slot.capacity }} ({{ pct }}%)</small>
+                </td>
+                <td>
+                  <span class="badge badge-success">{{ slot.completed_count }}</span>
+                </td>
+                <td>
+                  {% if slot.remaining_capacity <= 0 %}
+                    <span class="badge badge-danger">Full</span>
+                  {% else %}
+                    <span class="badge badge-info">{{ slot.remaining_capacity }} Left</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="5" class="text-center text-muted p-4">No slots created yet.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Distribution Records -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><span>📋</span> Recent Distribution Records</h3>
+        <a href="{{ url_for('admin_reports') }}" class="btn-link">View Full Report &rarr;</a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Beneficiary</th>
+                <th>Card / FPS</th>
+                <th>Slot Time</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for rec in recent_records %}
+              <tr>
+                <td>
+                  <strong>{{ rec.beneficiary_name }}</strong>
+                </td>
+                <td>
+                  <code>{{ rec.ration_card_number }}</code>
+                  <div class="text-muted text-xs">{{ rec.fps_shop_number }}</div>
+                </td>
+                <td>
+                  <small>{{ rec.slot_date or 'N/A' }}</small>
+                  <div class="text-xs text-muted">{{ rec.start_time or '' }}</div>
+                </td>
+                <td>
+                  {% if rec.status == 'COMPLETED' %}
+                    <span class="badge badge-success">COMPLETED</span>
+                  {% elif rec.status == 'ARRIVED' %}
+                    <span class="badge badge-info">ARRIVED</span>
+                  {% elif rec.status == 'ASSIGNED' %}
+                    <span class="badge badge-primary">ASSIGNED</span>
+                  {% elif rec.status == 'MISSED' %}
+                    <span class="badge badge-danger">MISSED</span>
+                  {% elif rec.status == 'REALLOCATED' %}
+                    <span class="badge badge-warning">REALLOCATED</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <form action="{{ url_for('update_distribution') }}" method="POST" style="display:inline;">
+                    <input type="hidden" name="record_id" value="{{ rec.id }}">
+                    <input type="hidden" name="redirect_to" value="admin_dashboard">
+                    {% if rec.status == 'ASSIGNED' %}
+                      <button type="submit" name="status" value="ARRIVED" class="btn btn-xs btn-outline-info" title="Mark Arrived">Arrive</button>
+                    {% elif rec.status == 'ARRIVED' %}
+                      <button type="submit" name="status" value="COMPLETED" class="btn btn-xs btn-outline-success" title="Mark Completed">Complete</button>
+                    {% elif rec.status == 'MISSED' %}
+                      <button type="submit" name="status" value="REALLOCATED" class="btn btn-xs btn-outline-warning" title="Reallocate">Reallocate</button>
+                    {% else %}
+                      <span class="text-xs text-muted">✓ Done</span>
+                    {% endif %}
+                  </form>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="5" class="text-center text-muted p-4">No recent activity.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

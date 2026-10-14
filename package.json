@@ -1,0 +1,18 @@
+{
+  "name": "aahara-setu-communication-module",
+  "version": "1.0.0",
+  "description": "Region-Based Communication Module for Aahara Setu Public Distribution System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "pds",
+    "ration-allocation",
+    "communication-system",
+    "aahara-setu"
+  ],
+  "author": "Aahara Setu Team",
+  "license": "MIT"
+}

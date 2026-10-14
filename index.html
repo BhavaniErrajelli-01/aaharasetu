@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aahara Setu | ఆహార సేతు</title>
+  <meta name="description" content="Aahara Setu - Smart Public Distribution System Portal">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="css/main.css">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌾</text></svg>">
+</head>
+<body>
+
+  <!-- Minimal Header (Centered title in Telugu and English, absolutely no info above title) -->
+  <header class="minimal-header">
+    <div class="header-inner">
+      <div class="minimal-brand" id="brand-home-btn" title="Aahara Setu Home">
+        <h1 class="brand-title-text">
+          Aahara Setu <span class="brand-sep">|</span> <span class="brand-te">ఆహార సేతు</span>
+        </h1>
+      </div>
+      
+      <!-- Single Option to Select Language (Either English or Telugu, not both simultaneously) -->
+      <div class="single-lang-container">
+        <label for="single-lang-select" class="sr-only">భాషను ఎంచుకోండి / Select Language</label>
+        <select id="single-lang-select" class="single-lang-select">
+          <option value="te" selected>తెలుగు (Telugu)</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <!-- App Main Content Area -->
+  <main class="app-container">
+
+    <!-- ============================================================= -->
+    <!-- 1. FIRST PAGE (LANDING): TWO ROLES: DEALER & USER             -->
+    <!-- ============================================================= -->
+    <section id="view-landing" class="view-section active">
+      <div class="landing-card">
+        
+        <div class="landing-prompt-title" id="lbl-select-role">
+          మీ విభాగాన్ని ఎంచుకోండి / Select Your Role
+        </div>
+
+        <!-- Two Buttons: Dealer & User -->
+        <div class="role-buttons-grid">
+          <!-- Dealer Button -->
+          <button type="button" class="role-card-btn btn-dealer-role" id="btn-nav-dealer">
+            <div class="role-icon-box">🏢</div>
+            <div class="role-name" id="txt-role-dealer">డీలర్ (Dealer)</div>
+            <div class="role-desc" id="txt-role-dealer-desc">రేషన్ దుకాణ నిర్వహణ</div>
+          </button>
+
+          <!-- User Button -->
+          <button type="button" class="role-card-btn btn-user-role" id="btn-nav-user">
+            <div class="role-icon-box">👤</div>
+            <div class="role-name" id="txt-role-user">వినియోగదారు (User)</div>
+            <div class="role-desc" id="txt-role-user-desc">కేటాయించిన స్లాట్ వివరాలు చూడండి</div>
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- 2. USER VIEW: RATION CARD & MOBILE -> ALLOCATED SLOT DISPLAY   -->
+    <!-- ============================================================= -->
+    <section id="view-user" class="view-section">
+      <div class="user-card-wrapper">
+        
+        <!-- Back Navigation -->
+        <div class="back-btn-row">
+          <button type="button" class="btn-back" id="btn-user-back">
+            <span>←</span> <span id="txt-user-back-label">హోమ్‌కు వెళ్లండి</span>
+          </button>
+        </div>
+
+        <!-- Input Form Card (No demo chips, no card details) -->
+        <div class="clean-card" id="user-lookup-card">
+          <div class="card-title-header">
+            <h2 id="txt-user-form-title">పౌర స్లాట్ ధృవీకరణ</h2>
+            <p id="txt-user-form-desc">
+              మీకు కేటాయించిన స్లాట్ వివరాలు చూడటానికి మీ రేషన్ కార్డు సంఖ్య మరియు నమోదిత మొబైల్ సంఖ్యను నమోదు చేయండి.
+            </p>
+          </div>
+
+          <form id="form-user-lookup">
+            <div class="form-group-clean">
+              <label for="input-ration-card" id="lbl-ration-card">రేషన్ కార్డు సంఖ్య</label>
+              <input 
+                type="text" 
+                id="input-ration-card" 
+                class="form-input-clean" 
+                placeholder="రేషన్ కార్డు సంఖ్యను నమోదు చేయండి / Enter Ration Card Number" 
+                required 
+                autocomplete="off"
+              >
+            </div>
+
+            <div class="form-group-clean">
+              <label for="input-mobile-number" id="lbl-mobile-number">నమోదిత మొబైల్ సంఖ్య</label>
+              <input 
+                type="tel" 
+                id="input-mobile-number" 
+                class="form-input-clean" 
+                placeholder="నమోదిత మొబైల్ సంఖ్యను నమోదు చేయండి / Enter Mobile Number" 
+                autocomplete="off"
+              >
+            </div>
+
+            <button type="submit" class="btn-submit-clean" id="btn-check-slot">
+              <span>🔍</span> <span id="txt-btn-check-slot">కేటాయించిన స్లాట్ వివరాలు చూడండి</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Allocated Slot Result Area (Populated in selected language) -->
+        <div id="user-slot-result-area"></div>
+
+      </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- 3. DEALER DASHBOARD: DROPDOWNS, GOODS DETAILS & USER STATUS   -->
+    <!-- ============================================================= -->
+    <section id="view-dealer" class="view-section">
+      <div>
+        
+        <!-- Back Navigation -->
+        <div class="back-btn-row">
+          <button type="button" class="btn-back" id="btn-dealer-back">
+            <span>←</span> <span id="txt-dealer-back-label">హోమ్‌కు వెళ్లండి</span>
+          </button>
+        </div>
+
+        <!-- Dropdowns Selection Card: District, Mandal, Village/Region, FPS Name -->
+        <div class="dealer-select-card">
+          <div style="margin-bottom: 1.25rem;">
+            <h2 style="font-family: var(--font-heading); font-size: 1.35rem; font-weight: 800;" id="txt-dealer-dash-title">
+              డీలర్ డాష్‌బోర్డ్
+            </h2>
+            <p style="font-size: 0.84rem; color: var(--navy-600); margin-top: 0.2rem;" id="txt-dealer-dash-desc">
+              సరుకుల నిల్వ మరియు లబ్ధిదారుల సేకరణ స్థితిని చూడటానికి మీ ప్రాంతాన్ని ఎంచుకోండి.
+            </p>
+          </div>
+
+          <div class="dropdowns-grid-4">
+            <!-- 1. District Dropdown -->
+            <div class="form-group-clean">
+              <label for="select-district" id="lbl-dealer-district">జిల్లా</label>
+              <select id="select-district" class="form-input-clean">
+                <!-- Dynamically filled -->
+              </select>
+            </div>
+
+            <!-- 2. Mandal Dropdown -->
+            <div class="form-group-clean">
+              <label for="select-mandal" id="lbl-dealer-mandal">మండలం</label>
+              <select id="select-mandal" class="form-input-clean">
+                <option value="">-- మండలాన్ని ఎంచుకోండి --</option>
+              </select>
+            </div>
+
+            <!-- 3. Village / Region Dropdown -->
+            <div class="form-group-clean">
+              <label for="select-village" id="lbl-dealer-village">గ్రామం / ప్రాంతం</label>
+              <select id="select-village" class="form-input-clean">
+                <option value="">-- గ్రామం / ప్రాంతాన్ని ఎంచుకోండి --</option>
+              </select>
+            </div>
+
+            <!-- 4. Fair Price Shop Name Dropdown -->
+            <div class="form-group-clean">
+              <label for="select-fps" id="lbl-dealer-fps">రేషన్ దుకాణం పేరు (FPS)</label>
+              <select id="select-fps" class="form-input-clean">
+                <!-- Dynamically filled -->
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- KEYPAD PHONE MULTIMODAL COMMUNICATION METRICS -->
+        <div class="dealer-select-card" id="dealer-comm-metrics-section" style="margin-bottom: 2rem;">
+          <div style="margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+              <h3 style="font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700; color: var(--navy-900);" id="txt-comm-metrics-title">
+                📱 కీప్యాడ్ ఫోన్ కమ్యూనికేషన్ పర్యవేక్షణ (SMS &amp; వాయిస్ కాల్స్)
+              </h3>
+              <p style="font-size: 0.82rem; color: var(--navy-600); margin-top: 0.15rem;" id="txt-comm-metrics-desc">
+                స్మార్ట్‌ఫోన్లు లేని సాధారణ కీప్యాడ్ ఫోన్ వినియోగదారులకు పంపిన ఆటోమేటెడ్ అలర్ట్‌ల వివరాలు
+              </p>
+            </div>
+            <span class="badge-status" style="background: #ecfdf5; color: #047857; font-weight: 700;">
+              ⚡ సేవ యాక్టివ్‌గా ఉంది (Active)
+            </span>
+          </div>
+
+          <div class="comm-kpi-grid" id="dealer-comm-kpi-container">
+            <!-- Dynamically populated KPI cards -->
+          </div>
+        </div>
+
+        <!-- GOODS DETAILS WITH QUANTITY (Shown after selection) -->
+        <div id="dealer-goods-details-section" style="margin-bottom: 2rem;">
+          <div style="margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+            <h3 style="font-family: var(--font-heading); font-size: 1.2rem; font-weight: 700; color: var(--navy-900);" id="txt-goods-stock-title">
+              సరుకుల వివరాలు &amp; లభ్యత పరిమాణం
+            </h3>
+            <span class="badge-status" style="background: #e0f2fe; color: #0369a1;" id="badge-selected-fps-name">
+              FPS-101
+            </span>
+          </div>
+
+          <!-- Cards for Rice, Wheat, Sugar, Dal, Oil -->
+          <div class="goods-inventory-grid" id="goods-inventory-container">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- USER COLLECTION STATUS (Who collected, who not) -->
+        <div class="user-status-card" id="dealer-user-status-section">
+          <div class="user-status-header-bar">
+            <div>
+              <h3 id="txt-user-collection-title">
+                లబ్ధిదారుల సేకరణ స్థితి (ఎవరు తీసుకున్నారు, ఎవరు తీసుకోలేదు)
+              </h3>
+              <div style="font-size: 0.8rem; color: var(--navy-600); margin-top: 0.2rem;" id="user-status-count-summary">
+                మొత్తం: 0 | సేకరించిన వారు: 0 | సేకరించని వారు: 0
+              </div>
+            </div>
+
+            <!-- Filter tabs: All, Collected, Not Collected -->
+            <div class="filter-pills-row">
+              <button type="button" class="filter-btn active" data-filter="ALL" id="btn-filter-all">
+                అందరూ
+              </button>
+              <button type="button" class="filter-btn" data-filter="COLLECTED" id="btn-filter-collected">
+                సేకరించిన వారు
+              </button>
+              <button type="button" class="filter-btn" data-filter="NOT_COLLECTED" id="btn-filter-not-collected">
+                సేకరించని వారు
+              </button>
+            </div>
+          </div>
+
+          <!-- Table of Beneficiaries under this Fair Price Shop -->
+          <div class="clean-table-responsive">
+            <table class="clean-table">
+              <thead>
+                <tr>
+                  <th id="th-index">వరుస సంఖ్య</th>
+                  <th id="th-name">లబ్ధిదారుని పేరు</th>
+                  <th id="th-card">రేషన్ కార్డు సంఖ్య</th>
+                  <th id="th-mobile">మొబైల్ సంఖ్య</th>
+                  <th id="th-slot">కేటాయించిన స్లాట్</th>
+                  <th id="th-keypad">కీప్యాడ్ ఫోన్ అలర్ట్‌లు (SMS &amp; కాల్)</th>
+                  <th id="th-goods">కేటాయించిన సరుకులు</th>
+                  <th id="th-status">సేకరణ స్థితి</th>
+                  <th id="th-action">చర్య</th>
+                </tr>
+              </thead>
+              <tbody id="dealer-users-tbody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Keypad Alert Modal -->
+        <div id="index-keypad-modal" class="modal-overlay" style="display: none;" onclick="closeIndexKeypadModal(event)">
+          <div class="modal-card-box" onclick="event.stopPropagation()">
+            <div class="modal-header-top">
+              <div>
+                <span class="modal-badge-keypad">📟 సాధారణ కీప్యాడ్ ఫోన్ అలర్ట్ (స్మార్ట్‌ఫోన్ లేదు)</span>
+                <h3 id="idx-modal-ben-name" class="modal-heading-text">--</h3>
+              </div>
+              <button type="button" class="btn-modal-close" onclick="closeIndexKeypadModal()">&times;</button>
+            </div>
+
+            <div class="modal-body-scroll">
+              <div class="modal-meta-grid">
+                <div class="meta-card-item">
+                  <span class="meta-label">రేషన్ కార్డు సంఖ్య</span>
+                  <strong id="idx-modal-card-no">--</strong>
+                </div>
+                <div class="meta-card-item">
+                  <span class="meta-label">నమోదిత మొబైల్ సంఖ్య</span>
+                  <strong id="idx-modal-mobile-no">--</strong>
+                </div>
+                <div class="meta-card-item">
+                  <span class="meta-label">కేటాయించిన సమయం</span>
+                  <strong id="idx-modal-slot-time" style="color: #059669;">--</strong>
+                </div>
+                <div class="meta-card-item">
+                  <span class="meta-label">పరికర వర్గం</span>
+                  <span style="font-weight: 700; color: #0284c7;">📟 కీప్యాడ్ ఫోన్ (Offline)</span>
+                </div>
+              </div>
+
+              <div class="modal-offline-notice">
+                <span class="notice-icon">ℹ️</span>
+                <div class="notice-text">
+                  <strong>ఈ లబ్ధిదారునికి స్మార్ట్‌ఫోన్ లేదా ఇంటర్నెట్ సదుపాయం లేదు.</strong>
+                  <p>స్లాట్ కేటాయింపు సమయానికి రేషన్ దుకాణానికి రావడం కొరకు, ఈ కింది ద్విభాషా SMS మరియు ఆటోమేటెడ్ వాయిస్ కాల్ నేరుగా వారి ఫోన్‌కు చేరవేయబడ్డాయి.</p>
+                </div>
+              </div>
+
+              <div class="modal-section-card">
+                <div class="section-card-header">
+                  <span>💬 <strong>1. ద్విభాషా SMS టెక్స్ట్ (Bilingual SMS)</strong></span>
+                  <span class="badge-status-ok">✓ డెలివరీ చేయబడింది</span>
+                </div>
+                <div class="sms-content-box">
+                  <div class="sms-sub-lang">తెలుగు SMS (Telugu):</div>
+                  <p id="idx-modal-sms-te" class="sms-bubble-text">--</p>
+                  <div class="sms-sub-lang" style="margin-top: 0.75rem;">English SMS:</div>
+                  <p id="idx-modal-sms-en" class="sms-bubble-text">--</p>
+                </div>
+              </div>
+
+              <div class="modal-section-card">
+                <div class="section-card-header">
+                  <span>📞 <strong>2. ఆటోమేటెడ్ వాయిస్ IVR కాల్ (Automated Voice Call)</strong></span>
+                  <span class="badge-status-ok">✓ కాల్ పూర్తయింది</span>
+                </div>
+                <div class="voice-content-box">
+                  <div class="sms-sub-lang">తెలుగు వాయిస్ స్క్రిప్ట్ (Telugu Voice Script):</div>
+                  <p id="idx-modal-voice-te" class="voice-bubble-text">--</p>
+                  <div class="sms-sub-lang" style="margin-top: 0.75rem;">English Voice Script:</div>
+                  <p id="idx-modal-voice-en" class="voice-bubble-text">--</p>
+                </div>
+
+                <div class="voice-player-bar">
+                  <div class="player-controls">
+                    <button type="button" class="btn-listen-voice" id="idx-btn-play-voice" onclick="toggleIndexPlayVoiceCall()">
+                      <span id="idx-speech-icon">🔊</span> <span id="idx-speech-label">వాయిస్ కాల్ వినండి (Play Voice Call)</span>
+                    </button>
+                    <div id="idx-speech-wave-box" class="speech-waves" style="display: none;">
+                      <span class="bar bar1"></span><span class="bar bar2"></span><span class="bar bar3"></span><span class="bar bar4"></span>
+                      <span class="wave-label">వాయిస్ కాల్ ప్లే అవుతోంది...</span>
+                    </div>
+                  </div>
+
+                  <div class="lang-selector-box">
+                    <select id="idx-select-voice-lang" class="select-voice-lang" onchange="onIndexVoiceLangChange()">
+                      <option value="te" selected>తెలుగు (Telugu Voice)</option>
+                      <option value="en">English (English Voice)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="modal-footer-clean">
+              <button type="button" class="btn-resend-now" onclick="resendIndexKeypadAlert()">
+                <span>📤</span> SMS &amp; కాల్ మళ్లీ పంపండి (Resend Alert)
+              </button>
+              <button type="button" class="btn-modal-dismiss" onclick="closeIndexKeypadModal()">
+                మూసివేయండి (Close)
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Gram Panchayat Speaker Announcement Roster Modal -->
+        <div id="index-announcement-modal" class="modal-overlay" style="display: none;" onclick="closeIndexAnnouncementModal(event)">
+          <div class="modal-card-box" style="max-width: 860px;" onclick="event.stopPropagation()">
+            <div class="modal-header-top">
+              <div>
+                <span class="modal-badge-keypad" style="background: #fef3c7; color: #92400e; border-color: #fde68a;">📢 గ్రామ పంచాయతీ లౌడ్‌స్పీకర్ చాటింపు జాబితా</span>
+                <h3 id="idx-announcement-title" class="modal-heading-text" style="font-size: 1.15rem;">మొబైల్ లేని లబ్ధిదారుల ప్రత్యేక జాబితా</h3>
+              </div>
+              <button type="button" class="btn-modal-close" onclick="closeIndexAnnouncementModal()">&times;</button>
+            </div>
+
+            <div class="modal-body-scroll" id="idx-announcement-modal-body">
+              <!-- Dynamically rendered -->
+            </div>
+
+            <div class="modal-footer-clean">
+              <button type="button" class="btn-print-main" onclick="window.print()">
+                <span>🖨️</span> చాటింపు జాబితాను ప్రింట్ చేయండి (Print Roster)
+              </button>
+              <button type="button" class="btn-modal-dismiss" onclick="closeIndexAnnouncementModal()">
+                మూసివేయండి (Close)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sign Out at bottom of Dealer Section -->
+        <div style="margin-top: 2rem; display: flex; justify-content: center;">
+          <button type="button" class="btn-back" onclick="location.reload()" style="padding: 0.65rem 1.8rem; font-weight: 600;">
+            🚪 సైన్ అవుట్ (Sign Out)
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Toast Container -->
+  <div id="toast-wrapper"></div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/translations.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

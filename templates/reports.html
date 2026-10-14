@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}Reports & Analytics - Aahara Setu{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title"><span>📈</span> PDS Distribution Analytics &amp; Reports</h1>
+      <p class="page-desc">Comprehensive real-time reporting on slot allocation, fulfillment rates, and village coverage.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+        <span>🖨️</span> Print / Export Report
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary Statistics Grid -->
+  <div class="metrics-grid">
+    <div class="stat-card stat-indigo">
+      <div class="stat-header">
+        <span class="stat-title">Total Enrolled</span>
+        <span class="stat-icon">👥</span>
+      </div>
+      <div class="stat-value">{{ reports.total_beneficiaries }}</div>
+      <div class="stat-sub">Registered ration cards</div>
+    </div>
+
+    <div class="stat-card stat-emerald">
+      <div class="stat-header">
+        <span class="stat-title">Completed (Fulfilled)</span>
+        <span class="stat-icon">✅</span>
+      </div>
+      <div class="stat-value">{{ reports.status_counts.COMPLETED }}</div>
+      <div class="stat-sub">{{ reports.completion_rate }}% Completion Rate</div>
+    </div>
+
+    <div class="stat-card stat-teal">
+      <div class="stat-header">
+        <span class="stat-title">Arrived at Shop</span>
+        <span class="stat-icon">📍</span>
+      </div>
+      <div class="stat-value">{{ reports.status_counts.ARRIVED }}</div>
+      <div class="stat-sub">Currently at FPS counter</div>
+    </div>
+
+    <div class="stat-card stat-amber">
+      <div class="stat-header">
+        <span class="stat-title">Assigned (Pending)</span>
+        <span class="stat-icon">⏳</span>
+      </div>
+      <div class="stat-value">{{ reports.status_counts.ASSIGNED }}</div>
+      <div class="stat-sub">Upcoming slot windows</div>
+    </div>
+
+    <div class="stat-card stat-rose">
+      <div class="stat-header">
+        <span class="stat-title">Missed Windows</span>
+        <span class="stat-icon">⚠️</span>
+      </div>
+      <div class="stat-value">{{ reports.status_counts.MISSED }}</div>
+      <div class="stat-sub">Did not collect during slot</div>
+    </div>
+
+    <div class="stat-card stat-purple">
+      <div class="stat-header">
+        <span class="stat-title">Reallocated Slots</span>
+        <span class="stat-icon">🔄</span>
+      </div>
+      <div class="stat-value">{{ reports.status_counts.REALLOCATED }}</div>
+      <div class="stat-sub">Evening catch-up batch</div>
+    </div>
+  </div>
+
+  <!-- Chart.js Visualizations Grid -->
+  <div class="charts-grid-2 mb-4">
+    <!-- Chart 1: Distribution Status Breakdown -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><span>🥧</span> Distribution Status Distribution</h3>
+      </div>
+      <div class="card-body">
+        <div class="chart-canvas-wrap">
+          <canvas id="chart-status-breakdown"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart 2: Slot Capacity Utilization -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><span>📊</span> Slot Capacity vs Assigned vs Completed</h3>
+      </div>
+      <div class="card-body">
+        <div class="chart-canvas-wrap">
+          <canvas id="chart-slot-utilization"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart 3: Village-wise Beneficiary Coverage -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h3 class="card-title"><span>🏘️</span> Beneficiary Demographics Across Villages &amp; Regions</h3>
+    </div>
+    <div class="card-body">
+      <div class="chart-canvas-wrap-wide">
+        <canvas id="chart-village-breakdown"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slot Capacity & Performance Detailed Table -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title"><span>📑</span> Slot Fulfillment Audit Table</h3>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Slot ID</th>
+              <th>Date</th>
+              <th>Time Window</th>
+              <th>Total Capacity</th>
+              <th>Assigned Citizens</th>
+              <th>Completed</th>
+              <th>Missed</th>
+              <th>Reallocated</th>
+              <th>Fulfillment %</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in reports.slots_utilization %}
+            {% set ful_pct = ((s.completed_count / s.assigned_count) * 100)|round|int if s.assigned_count > 0 else 0 %}
+            <tr>
+              <td><strong>#{{ s.id }}</strong></td>
+              <td>{{ s.slot_date }}</td>
+              <td><code>{{ s.start_time }} - {{ s.end_time }}</code></td>
+              <td>{{ s.capacity }}</td>
+              <td>{{ s.assigned_count }}</td>
+              <td><span class="badge badge-success">{{ s.completed_count }}</span></td>
+              <td><span class="badge badge-danger">{{ s.missed_count }}</span></td>
+              <td><span class="badge badge-warning">{{ s.reallocated_count }}</span></td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="progress-wrap flex-1" style="min-width: 80px;">
+                    <div class="progress-bar" style="width: {{ ful_pct }}%;"></div>
+                  </div>
+                  <small><strong>{{ ful_pct }}%</strong></small>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Render Chart.js visual charts with data passed from backend -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const reportsData = {{ reports|tojson|safe }};
+
+  // 1. Distribution Status Doughnut Chart
+  const ctxStatus = document.getElementById('chart-status-breakdown').getContext('2d');
+  new Chart(ctxStatus, {
+    type: 'doughnut',
+    data: {
+      labels: ['COMPLETED', 'ARRIVED', 'ASSIGNED', 'MISSED', 'REALLOCATED'],
+      datasets: [{
+        data: [
+          reportsData.status_counts.COMPLETED,
+          reportsData.status_counts.ARRIVED,
+          reportsData.status_counts.ASSIGNED,
+          reportsData.status_counts.MISSED,
+          reportsData.status_counts.REALLOCATED
+        ],
+        backgroundColor: [
+          '#059669', // Completed (emerald)
+          '#0284c7', // Arrived (sky)
+          '#6366f1', // Assigned (indigo)
+          '#e11d48', // Missed (rose)
+          '#d97706'  // Reallocated (amber)
+        ],
+        borderWidth: 2,
+        borderColor: '#ffffff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' }
+      }
+    }
+  });
+
+  // 2. Slot Capacity Utilization Bar Chart
+  const slotLabels = reportsData.slots_utilization.map(s => `Slot #${s.id} (${s.start_time})`);
+  const capacityData = reportsData.slots_utilization.map(s => s.capacity);
+  const assignedData = reportsData.slots_utilization.map(s => s.assigned_count);
+  const completedData = reportsData.slots_utilization.map(s => s.completed_count);
+
+  const ctxSlots = document.getElementById('chart-slot-utilization').getContext('2d');
+  new Chart(ctxSlots, {
+    type: 'bar',
+    data: {
+      labels: slotLabels,
+      datasets: [
+        {
+          label: 'Total Capacity',
+          data: capacityData,
+          backgroundColor: '#94a3b8'
+        },
+        {
+          label: 'Assigned',
+          data: assignedData,
+          backgroundColor: '#4f46e5'
+        },
+        {
+          label: 'Completed',
+          data: completedData,
+          backgroundColor: '#10b981'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true }
+      },
+      plugins: {
+        legend: { position: 'bottom' }
+      }
+    }
+  });
+
+  // 3. Village-wise Coverage Horizontal Bar Chart
+  const villageLabels = reportsData.village_counts.map(v => v.village || 'Other');
+  const villageData = reportsData.village_counts.map(v => v.c);
+
+  const ctxVillage = document.getElementById('chart-village-breakdown').getContext('2d');
+  new Chart(ctxVillage, {
+    type: 'bar',
+    data: {
+      labels: villageLabels,
+      datasets: [{
+        label: 'Beneficiaries Registered',
+        data: villageData,
+        backgroundColor: '#0d9488',
+        borderRadius: 6
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { beginAtZero: true }
+      },
+      plugins: {
+        legend: { display: false }
+      }
+    }
+  });
+});
+</script>
+{% endblock %}
